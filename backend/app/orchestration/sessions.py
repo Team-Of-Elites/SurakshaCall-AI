@@ -13,6 +13,7 @@ class SessionManager:
     def __init__(self, settings: Settings, websocket_manager) -> None:
         self.settings = settings
         self.websocket_manager = websocket_manager
+        self.mobile_pusher = None
         self.sessions: dict[str, CallState] = {}
         self.workers: dict[str, SessionWorker] = {}
 
@@ -93,6 +94,10 @@ class SessionManager:
         state = self.sessions.get(event.session_id)
         if state:
             event.sequence = state.next_sequence()
+        if event.type in {EventType.SAFETY_WARNING, EventType.DECISION_UPDATE} and self.mobile_pusher:
+            await self.websocket_manager.broadcast(event, kinds=("dashboard",))
+            await self.mobile_pusher(event.session_id, event.payload)
+            return
         await self.websocket_manager.broadcast(event)
 
     def snapshot(self, state: CallState) -> dict:

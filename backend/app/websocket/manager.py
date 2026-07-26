@@ -1,6 +1,6 @@
 import asyncio
 from collections import defaultdict
-from typing import Literal
+from typing import Literal, Sequence
 
 from fastapi import WebSocket
 
@@ -26,13 +26,17 @@ class WebSocketManager:
         if not self._connections[session_id]["dashboard"] and not self._connections[session_id]["mobile"]:
             self._connections.pop(session_id, None)
 
-    async def broadcast(self, event: EventEnvelope) -> None:
+    async def broadcast(
+        self, event: EventEnvelope, kinds: Sequence[ClientKind] | None = None
+    ) -> None:
         payload = event.model_dump_json()
         if len(payload.encode("utf-8")) > self.max_payload_bytes:
             return
+        selected_kinds = kinds or ("dashboard", "mobile")
         targets = [
             websocket
-            for clients in self._connections.get(event.session_id, {}).values()
+            for kind, clients in self._connections.get(event.session_id, {}).items()
+            if kind in selected_kinds
             for websocket in clients
         ]
         if not targets:

@@ -29,8 +29,12 @@ class Settings(BaseModel):
     websocket_max_payload_bytes: int = Field(default=64_000)
     session_token: str = Field(default="local-dev-token")
     whisper_model: str = Field(default="small")
+    whisper_device: str = Field(default="cpu")
+    whisper_compute_type: str = Field(default="int8")
     llm_model: str = Field(default="qwen3:4b")
     clear_session_on_end: bool = Field(default=True)
+    mobile_transcription_chunk_seconds: float = Field(default=3.0)
+    test_transcript_override: str | None = Field(default=None)
 
 
 def _bool_from_env(value: str | None, default: bool) -> bool:
@@ -76,7 +80,18 @@ def get_settings() -> Settings:
         session_token=os.getenv("SESSION_TOKEN", defaults.session_token),
         whisper_model=os.getenv("WHISPER_MODEL", defaults.whisper_model),
         llm_model=os.getenv("LLM_MODEL", defaults.llm_model),
+        whisper_device=os.getenv("WHISPER_DEVICE", defaults.whisper_device),
+        whisper_compute_type=os.getenv(
+            "WHISPER_COMPUTE_TYPE", defaults.whisper_compute_type
+        ),
         clear_session_on_end=_bool_from_env(
             os.getenv("CLEAR_SESSION_ON_END"), defaults.clear_session_on_end
         ),
+        mobile_transcription_chunk_seconds=float(
+            os.getenv(
+                "MOBILE_TRANSCRIPTION_CHUNK_SECONDS",
+                str(defaults.mobile_transcription_chunk_seconds),
+            )
+        ),
+        test_transcript_override=os.getenv("MOBILE_TEST_TRANSCRIPT"),
     )

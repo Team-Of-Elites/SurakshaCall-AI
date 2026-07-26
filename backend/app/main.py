@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.api import health, mobile, replay, sessions
+from backend.app.api import health, mobile, mobile_pairing, replay, sessions
 from backend.app.config import get_settings
 from backend.app.lifespan import lifespan
-from backend.app.websocket import dashboard, mobile as mobile_ws
+from backend.app.websocket import dashboard
 
 
 def create_app() -> FastAPI:
@@ -21,8 +21,8 @@ def create_app() -> FastAPI:
     app.include_router(sessions.router)
     app.include_router(replay.router)
     app.include_router(mobile.router)
+    app.include_router(mobile_pairing.router)
     app.include_router(dashboard.router)
-    app.include_router(mobile_ws.router)
     return app
 
 

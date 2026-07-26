@@ -18,6 +18,7 @@ class EventType(StrEnum):
     IDENTITY_CLAIMED = "identity_claimed"
     IDENTITY_VERIFIED = "identity_verified"
     COMMUNITY_MATCH = "community_match"
+    DECISION_UPDATE = "decision_update"
     RISK_UPDATE = "risk_update"
     SAFETY_WARNING = "safety_warning"
     PRIVACY_STATUS = "privacy_status"

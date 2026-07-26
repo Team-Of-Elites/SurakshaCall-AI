@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SurakshaCall Mobile Mic</title>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; background: #08111f; color: #f8fafc; }
+    main { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
+    section { width: min(440px, 100%); }
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    p { color: #cbd5e1; line-height: 1.5; }
+    button { width: 100%; border: 0; border-radius: 8px; padding: 16px; font-size: 18px; font-weight: 700; background: #22c55e; color: #04111d; }
+    button:disabled { background: #475569; color: #cbd5e1; }
+    .status { margin-top: 16px; padding: 14px; border: 1px solid #334155; border-radius: 8px; background: #0f172a; }
+    .warning { margin-top: 16px; color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main>
+    <section>
+      <h1>SurakshaCall</h1>
+      <p>Keep this page open. The phone sends microphone audio to the laptop over the local network. Processing stays on the laptop.</p>
+      <button id="start">Start Listening</button>
+      <div class="status" id="status">Waiting to connect...</div>
+      <div class="warning" id="warning"></div>
+    </section>
+  </main>
+  <script>
+    const sessionId = "__SESSION_ID__";
+    const statusEl = document.getElementById("status");
+    const warningEl = document.getElementById("warning");
+    const startButton = document.getElementById("start");
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/mobile/${sessionId}`);
+    socket.binaryType = "arraybuffer";
+
+    socket.addEventListener("open", () => {
+      statusEl.textContent = "Connected. Tap Start Listening.";
+    });
+
+    socket.addEventListener("close", () => {
+      statusEl.textContent = "Disconnected. Reopen the page if needed.";
+      startButton.disabled = true;
+    });
+
+    socket.addEventListener("message", (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === "safety_warning") {
+          warningEl.textContent = message.payload.message || "Warning received from laptop.";
+        }
+      } catch {
+        statusEl.textContent = event.data;
+      }
+    });
+
+    startButton.addEventListener("click", async () => {
+      try {
+        startButton.disabled = true;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+        await streamAudio(stream);
+        statusEl.textContent = "Listening and streaming to laptop.";
+      } catch (error) {
+        statusEl.textContent = `Microphone failed: ${error.name || error.message}`;
+        startButton.disabled = false;
+      }
+    });
+
+    async function streamAudio(stream) {
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+      processor.onaudioprocess = (event) => {
+        if (socket.readyState !== WebSocket.OPEN) return;
+        const input = event.inputBuffer.getChannelData(0);
+        const downsampled = downsample(input, audioContext.sampleRate, 16000);
+        socket.send(floatToInt16(downsampled));
+      };
+    }
+
+    function downsample(input, inputRate, outputRate) {
+      if (inputRate === outputRate) return input;
+      const ratio = inputRate / outputRate;
+      const outputLength = Math.floor(input.length / ratio);
+      const output = new Float32Array(outputLength);
+      for (let index = 0; index < outputLength; index++) {
+        output[index] = input[Math.floor(index * ratio)];
+      }
+      return output;
+    }
+
+    function floatToInt16(input) {
+      const output = new Int16Array(input.length);
+      for (let index = 0; index < input.length; index++) {
+        const sample = Math.max(-1, Math.min(1, input[index]));
+        output[index] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+      }
+      return output.buffer;
+    }
+  </script>
+</body>
+</html>
