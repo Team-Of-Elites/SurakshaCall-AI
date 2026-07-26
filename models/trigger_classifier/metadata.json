@@ -1,0 +1,22 @@
+{
+  "model": "OneVsRest + LogisticRegression",
+  "embedder": "paraphrase-multilingual-MiniLM-L12-v2",
+  "trained_at": "2026-07-27T00:24:43.334284",
+  "num_train_samples": 55,
+  "num_test_samples": 14,
+  "labels": [
+    "AUTHORITY_CLAIM",
+    "CHANNEL_SWITCH",
+    "FEAR_THREAT",
+    "ISOLATION",
+    "PAYMENT_REQUEST",
+    "PERSISTENCE",
+    "REMOTE_ACCESS",
+    "REWARD_SCARCITY",
+    "SAFE_ADVICE",
+    "SECRET_REQUEST",
+    "URGENCY"
+  ],
+  "threshold": 0.35,
+  "note": "Synthetic dataset only. Real-world accuracy will differ."
+}
