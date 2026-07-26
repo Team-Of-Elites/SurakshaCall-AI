@@ -159,7 +159,7 @@ OPTIONALLY SHARED — Anonymous Pattern Only
 | VAD | Silero VAD (via faster-whisper) | Free |
 | Speech-to-Text | faster-whisper small, INT8 | Free |
 | Hindi ASR | IndicWhisper weights (AI4Bharat) | Free |
-| LLM | Ollama + phi3.5 / llama3.2 / gemma2:2b | Free |
+| LLM | Ollama + qwen3:4b / llama3.2 / gemma2:2b | Free |
 | Rule Engine | Python regex + custom patterns | Free |
 | Classifier | sentence-transformers + scikit-learn | Free |
 | Database | SQLite3 (built-in Python) | Free |
@@ -281,9 +281,9 @@ pip install -r requirements.txt
 
 ```bash
 # Choose based on your RAM:
-ollama pull phi3.5        # Best reasoning  — 16GB+ RAM
-ollama pull llama3.2      # Best JSON output — 16GB+ RAM
-ollama pull gemma2:2b     # Lightest option  — 8GB RAM
+ollama pull qwen3:4b      # Best reasoning  — ~6GB RAM
+ollama pull llama3.2      # Fast fallback    — ~6GB RAM
+ollama pull gemma2:2b     # Lightest option  — ~4GB RAM
 ```
 
 ### 3. Configure Environment
@@ -441,7 +441,7 @@ pytest>=8.2.2
 ## ⚙️ .env.example
 
 ```env
-LLM_MODEL=phi3.5
+LLM_MODEL=qwen3:4b
 AUDIO_SAMPLE_RATE=16000
 ANALYSIS_CHUNK_SECONDS=2.0
 MAX_AUDIO_BUFFER_SECONDS=20

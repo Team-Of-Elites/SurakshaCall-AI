@@ -29,7 +29,7 @@ class Settings(BaseModel):
     websocket_max_payload_bytes: int = Field(default=64_000)
     session_token: str = Field(default="local-dev-token")
     whisper_model: str = Field(default="small")
-    llm_model: str = Field(default="phi3.5")
+    llm_model: str = Field(default="qwen3:4b")
     clear_session_on_end: bool = Field(default=True)
 
 

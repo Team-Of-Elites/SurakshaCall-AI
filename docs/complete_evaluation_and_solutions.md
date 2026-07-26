@@ -31,7 +31,7 @@ graph LR
     A["📱 Phone on Speaker"] -->|Ambient audio| B["💻 Laptop Mic"]
     B -->|WebSocket| C["⚙️ FastAPI Backend"]
     C --> D["🎙️ faster-whisper STT"]
-    D --> E["🤖 Phi-3 LLM Analysis"]
+    D --> E["🤖 Qwen 3 LLM Analysis"]
     E --> F["📊 Live Risk Dashboard"]
 ```
 
@@ -72,14 +72,14 @@ Without conflict resolution, you're just running functions in sequence — not m
 
 | Problem | Solution |
 |:---|:---|
-| You claim "privacy-first" but your tech stack lists "LLM API depending on constraints" — sending transcripts to a cloud API is the **opposite** of privacy. "Anonymous pattern fingerprints" is undefined. | **Commit to 100% local inference** via Ollama (`phi3:mini` = 2.3GB, runs on any laptop). Define "pattern fingerprint" as a structured JSON of detected tactics — no text, no audio, no PII. |
+| You claim "privacy-first" but your tech stack lists "LLM API depending on constraints" — sending transcripts to a cloud API is the **opposite** of privacy. "Anonymous pattern fingerprints" is undefined. | **Commit to 100% local inference** via Ollama (`qwen3:4b` = 2.5GB, runs on any laptop). Define "pattern fingerprint" as a structured JSON of detected tactics — no text, no audio, no PII. |
 
 **Local LLM performance (all viable for demo):**
 
 | Hardware | Model | Speed | Verdict |
 |:---|:---|:---|:---|
-| Laptop + GPU (GTX 1650+) | phi3:mini | 40-70 tok/s | ✅ Excellent |
-| Laptop CPU (i5/Ryzen 5) | phi3:mini | 10-20 tok/s | ✅ Acceptable |
+| Laptop + GPU (GTX 1650+) | qwen3:4b | 40-70 tok/s | ✅ Excellent |
+| Laptop CPU (i5/Ryzen 5) | qwen3:4b | 10-20 tok/s | ✅ Acceptable |
 | Older laptop CPU | gemma2:2b | 15-25 tok/s | ✅ Good |
 
 **Anonymous Pattern Fingerprint (precisely defined):**
@@ -104,7 +104,7 @@ graph TD
     subgraph "🟢 ON-DEVICE (Never Leaves)"
         A["📞 Call Audio"] --> B["🎙️ faster-whisper (Local)"]
         B --> C["📝 Transcript (Local)"]
-        C --> D["🤖 Phi-3 via Ollama (Local)"]
+        C --> D["🤖 Qwen 3 via Ollama (Local)"]
         D --> E["📊 Analysis (Shown to user)"]
         A --> F["🗑️ Audio deleted after processing"]
         C --> G["🗑️ Transcript deleted after analysis"]
@@ -116,7 +116,7 @@ graph TD
 ```
 
 **Judge Q:** *"You say privacy-first but use a cloud LLM API?"*  
-**Your A:** *"We run Phi-3 entirely locally via Ollama. Zero data leaves the device. We can demo this — there's no network call in our LLM pipeline."*
+**Your A:** *"We run Qwen 3 entirely locally via Ollama. Zero data leaves the device. We can demo this — there's no network call in our LLM pipeline."*
 
 ---
 
@@ -159,7 +159,7 @@ graph TD
 |:---|:---|
 | Audio buffer + VAD | 1-3 sec |
 | faster-whisper (CPU, int8, small) | 0.5-1.5 sec |
-| LLM analysis (Phi-3, Ollama) | 3-6 sec |
+| LLM analysis (Qwen 3, Ollama) | 3-6 sec |
 | **Total per utterance** | **~5-10 sec** |
 
 ```python
@@ -280,7 +280,7 @@ graph LR
 | 2 | *"Android blocks call audio. How does this work?"* | "We use a web dashboard that captures speakerphone audio via browser mic. Production path: telecom integration / OEM partnership." |
 | 3 | *"Show me a live demo."* | Run a pre-recorded scam audio through the full pipeline → show live dashboard updating. |
 | 4 | *"What about false positives?"* | "Our 50-scenario test set includes 20 legitimate calls. Our false positive rate is X%. We also resolve conflicts — a verified bank using pushy language is flagged as aggressive marketing, not scam." |
-| 5 | *"You say privacy-first but need a cloud API?"* | "Everything runs locally via Ollama. Phi-3 mini, 2.3GB, on-device. Zero network calls in our AI pipeline." |
+| 5 | *"You say privacy-first but need a cloud API?"* | "Everything runs locally via Ollama. Qwen 3 4B, 2.5GB, on-device. Zero network calls in our AI pipeline." |
 | 6 | *"What's your accuracy?"* | "F1 score of X% on our 50-scenario benchmark with Y% false positive rate." |
 | 7 | *"Who's the target user?"* | "Primarily 45+ age group — most vulnerable to scam calls, least likely to recognize manipulation tactics. Our coaching tips use simple, actionable language." |
 | 8 | *"How does community intelligence work without leaking data?"* | "We share only an anonymous pattern fingerprint — a JSON of detected tactics, scam type, and a hashed number. No transcript, no audio, no PII." |
@@ -337,7 +337,7 @@ graph LR
 ```
 Web Dashboard (not Android app)
   + faster-whisper + Silero VAD (not raw Whisper)
-  + Phi-3 via Ollama (100% local, genuinely private)
+  + Qwen 3 via Ollama (100% local, genuinely private)
   + Indian Scam Psychology Taxonomy (6 tactics, Cialdini-based)
   + 5-Stage Scam Progression Model (no competitor has this)
   + Explainable per-tactic analysis (not "Spam Likely")

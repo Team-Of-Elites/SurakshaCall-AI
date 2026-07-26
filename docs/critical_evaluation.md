@@ -83,7 +83,7 @@ You claim:
 - ✅ "Community sharing uses only anonymous behavioral patterns"
 
 But your tech stack includes:
-- ❌ **LLM via API** (Phi-3 / Llama 3.2 / Gemma — "local or API depending on hackathon constraints") — if you use an API, the entire call transcript is being **sent to a third-party server**. That's the opposite of privacy-first.
+- ❌ **LLM via API** (Qwen 3 / Llama 3.2 / Gemma — "local or API depending on hackathon constraints") — if you use an API, the entire call transcript is being **sent to a third-party server**. That's the opposite of privacy-first.
 - ❌ **Community Intelligence Agent** — how do you share "anonymous behavioral patterns" without revealing the conversation content? What exactly is a "pattern fingerprint"? This is undefined.
 - ❌ **ChromaDB** — if you're storing embeddings of conversations, those embeddings can be reverse-engineered to reconstruct approximate content.
 
@@ -91,7 +91,7 @@ But your tech stack includes:
 > *"You say privacy-first, but you're sending transcripts to an LLM API. How is that privacy-first? And what exactly is an 'anonymous scam pattern fingerprint'? Can you show me the code that ensures no PII leaks?"*
 
 ### How to Fix:
-- **Commit to local inference.** Use `Phi-3-mini` (3.8B) or `Gemma-2B` via `llama.cpp` or `Ollama` — these genuinely run on a laptop. If you can't run it locally, say so honestly.
+- **Commit to local inference.** Use `Qwen 3 4B` or `Gemma-2B` via `llama.cpp` or `Ollama` — these genuinely run on a laptop. If you can't run it locally, say so honestly.
 - **Define "pattern fingerprint" precisely.** Example: *"We extract a JSON schema of manipulation tactics used (urgency: true, fake_authority: true, isolation: false) without storing any transcript text."*
 - **Show the data flow diagram** with clear annotations of what stays on-device vs. what leaves.
 
