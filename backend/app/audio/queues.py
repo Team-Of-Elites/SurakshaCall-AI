@@ -1,3 +1,10 @@
+"""
+queues.py
+
+Provides thread-safe queue management for the real-time audio pipeline.
+Acts as an intermediate buffer between audio capture and speech transcription,
+ensuring smooth and asynchronous processing of incoming audio streams.
+"""
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
