@@ -1,0 +1,1 @@
+# Deletes private session data
