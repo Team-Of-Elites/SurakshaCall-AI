@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "tactics": [
+    "AUTHORITY",
+    "URGENCY",
+    "ISOLATION"
+  ],
+  "organization_type": "BANK",
+  "scenario": "BANK_KYC",
+  "requested_action": "SECRET_CODE",
+  "threat_type": "ACCOUNT_FREEZE",
+  "channel_switch": "NONE",
+  "language_family": "HI_EN"
+}
