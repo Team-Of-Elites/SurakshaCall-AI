@@ -48,3 +48,5 @@ ASR Utterance → normalizer.py → rules.py → safe_advice.py → classifier.p
 ## 5. Testing & Verification
 * **Unit Tests:** `tests/test_rules.py` (28 tests), `tests/test_classifier.py` (1 test).
 * **Evaluation:** `scripts/evaluate_detector.py` showing 100% recall on critical events.
+
+# this is change...
