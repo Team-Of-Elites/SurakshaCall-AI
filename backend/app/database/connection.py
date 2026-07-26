@@ -1,0 +1,1 @@
+# Creates/manages SQLite connection

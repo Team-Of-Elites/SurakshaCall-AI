@@ -1,0 +1,1 @@
+# This compares the current scam fingerprint against previous patterns.

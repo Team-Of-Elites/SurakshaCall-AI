@@ -1,0 +1,1 @@
+-- Defines your database tables

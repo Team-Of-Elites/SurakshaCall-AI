@@ -1,0 +1,1 @@
+# This converts a conversation's scam behavior into structured categories.
