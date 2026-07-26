@@ -1,0 +1,42 @@
+﻿[
+  {
+    "canonical_name": "State Bank of India",
+    "organization_type": "BANK",
+    "aliases": ["sbi", "state bank", "sbi bank"],
+    "official_numbers": ["1800112211", "18004253800"],
+    "trai_prefix": "1600",
+    "never_request": ["OTP", "PIN", "CVV", "password", "remote access"],
+    "source_url": "https://sbi.co.in",
+    "last_verified_at": "2026-07-26"
+  },
+  {
+    "canonical_name": "Reserve Bank of India",
+    "organization_type": "GOVERNMENT",
+    "aliases": ["rbi", "reserve bank"],
+    "official_numbers": ["14440"],
+    "never_request": ["money transfer", "OTP", "bank credentials"],
+    "policy_note": "RBI never calls individuals to demand payment or credentials.",
+    "source_url": "https://rbi.org.in",
+    "last_verified_at": "2026-07-26"
+  },
+  {
+    "canonical_name": "Central Bureau of Investigation",
+    "organization_type": "GOVERNMENT",
+    "aliases": ["cbi", "central bureau of investigation"],
+    "official_numbers": [],
+    "never_request": ["money transfer", "payment over phone"],
+    "policy_note": "CBI never contacts civilians over phone to demand money to resolve cases.",
+    "source_url": "https://cbi.gov.in",
+    "last_verified_at": "2026-07-26"
+  },
+  {
+    "canonical_name": "Cyber Crime Department",
+    "organization_type": "GOVERNMENT",
+    "aliases": ["cybercrime", "cyber crime department"],
+    "official_numbers": ["1930"],
+    "never_request": ["immediate payment", "OTP", "remote access"],
+    "policy_note": "Report fraud at cybercrime.gov.in or call 1930.",
+    "source_url": "https://cybercrime.gov.in",
+    "last_verified_at": "2026-07-26"
+  }
+]
