@@ -1,0 +1,4 @@
+passwords.txt
+temp/
+*.log
+node_modules/
