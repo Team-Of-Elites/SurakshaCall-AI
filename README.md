@@ -224,12 +224,12 @@ SurakshaCall-AI/
 │       └── detection.py               # GET /detection/history
 │
 ├── frontend/                           # ── Palak ──
+│   ├── README.md                       # Frontend run guide
 │   ├── index.html                      # Main dashboard
 │   ├── mobile.html                     # Phone companion warning page
-│   ├── css/dashboard.css
+│   ├── css/app.css                     # Dashboard styling
 │   └── js/
-│       ├── dashboard.js                # WebSocket + live UI updates
-│       └── mobile.js                   # Phone companion client
+│       └── app.js                      # REST + WebSocket dashboard client
 │
 ├── data/
 │   ├── dialogues/                      # JSONL dataset (Lakshay)
@@ -268,6 +268,7 @@ SurakshaCall-AI/
 - [Ollama](https://ollama.com/download) installed and running
 - ffmpeg installed
 - A laptop microphone
+- A modern browser
 
 ### 1. Clone & Install
 
@@ -296,34 +297,57 @@ cp .env.example .env
 ### 4. Run the Backend
 
 ```bash
-uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 5. Open the Dashboard
+The frontend defaults to `http://127.0.0.1:8000` as the backend API URL.
+
+### 5. Run the Frontend Dashboard
+
+Open a second terminal:
+
+```bash
+cd frontend
+python -m http.server 5173 --bind 127.0.0.1
+```
+
+Then open:
 
 ```
-http://localhost:8000
+http://127.0.0.1:5173/
 ```
+
+In the dashboard:
+
+1. Keep `Backend Base URL` as `http://127.0.0.1:8000`.
+2. Click `Check Health`.
+3. Click `Create`.
+4. Click `Connect WS` if the WebSocket is not already connected.
+5. Use `OTP Sample` + `Submit Transcript` to test a critical-risk detection.
 
 ### 6. Connect Your Phone (Optional)
+
+Create a session in the dashboard first, then click `Load Pairing`. Open the generated phone URL on the mobile device.
 
 **Via USB (ADB — most reliable):**
 ```bash
 adb devices
 adb reverse tcp:8000 tcp:8000
-# Then open http://127.0.0.1:8000/mobile on your phone
+# Then open the dashboard pairing URL for the current session.
 ```
 
 **Via Local Wi-Fi:**
 ```
-http://<your-laptop-ip>:8000/mobile
+http://<your-laptop-ip>:8000/mobile/<session-id>
 ```
 
-### 7. Run a Demo Scenario
+For Wi-Fi demos, bind the backend to the LAN interface and allow the frontend origin:
 
 ```bash
-python scripts/replay_demo.py --scenario digital_arrest_hindi
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+If the frontend is not served from `http://127.0.0.1:5173`, set `CORS_ORIGINS` in `.env` to include the frontend URL.
 
 ---
 
