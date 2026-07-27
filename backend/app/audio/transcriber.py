@@ -16,6 +16,10 @@ class MobileAudioTranscriptionService:
         self._tasks: dict[str, asyncio.Task] = {}
         self._model = None
         self._model_error: str | None = None
+        self._stats: dict[str, dict[str, object]] = {}
+
+    def stats(self) -> dict[str, dict[str, object]]:
+        return self._stats
 
     def ensure_session(self, session_id: str) -> None:
         if session_id not in self._tasks or self._tasks[session_id].done():
@@ -35,16 +39,32 @@ class MobileAudioTranscriptionService:
 
     async def _run_session(self, session_id: str) -> None:
         queue = self.audio_queues.get(session_id)
+        self._stats.setdefault(session_id, {
+            "frames": 0,
+            "bytes": 0,
+            "chunks_started": 0,
+            "chunks_finished": 0,
+            "last_text": "",
+            "last_error": "",
+        })
         buffer = bytearray()
         while True:
             frame = await queue.get()
             try:
+                stats = self._stats.setdefault(session_id, {})
+                stats["frames"] = int(stats.get("frames", 0)) + 1
+                stats["bytes"] = int(stats.get("bytes", 0)) + len(frame.pcm)
                 buffer.extend(frame.pcm)
                 target_bytes = int(16_000 * 2 * self.settings.mobile_transcription_chunk_seconds)
                 if len(buffer) >= target_bytes:
                     pcm = bytes(buffer)
                     buffer.clear()
-                    text = await self.transcribe_pcm(pcm)
+                    self._stats[session_id]["chunks_started"] = int(self._stats[session_id].get("chunks_started", 0)) + 1
+                    print(f"WHISPER chunk ready session={session_id} bytes={len(pcm)}", flush=True)
+                    text = await self.transcribe_pcm(pcm, session_id=session_id)
+                    self._stats[session_id]["chunks_finished"] = int(self._stats[session_id].get("chunks_finished", 0)) + 1
+                    self._stats[session_id]["last_text"] = text
+                    print(f"WHISPER text session={session_id}: {text!r}", flush=True)
                     if text:
                         await self.sessions.submit_transcript(
                             session_id,
@@ -53,23 +73,30 @@ class MobileAudioTranscriptionService:
             finally:
                 queue.task_done()
 
-    async def transcribe_pcm(self, pcm: bytes) -> str:
+    async def transcribe_pcm(self, pcm: bytes, session_id: str | None = None) -> str:
         if hasattr(self.settings, "test_transcript_override") and self.settings.test_transcript_override:
             return self.settings.test_transcript_override
-        return await asyncio.to_thread(self._transcribe_sync, pcm)
+        return await asyncio.to_thread(self._transcribe_sync, pcm, session_id)
 
-    def _transcribe_sync(self, pcm: bytes) -> str:
+    def _transcribe_sync(self, pcm: bytes, session_id: str | None = None) -> str:
         model = self._load_model()
         if model is None:
             return ""
         wav_bytes = _pcm_to_wav_bytes(pcm)
-        segments, _info = model.transcribe(
-            io.BytesIO(wav_bytes),
-            language=None,
-            vad_filter=True,
-            beam_size=1,
-        )
-        return " ".join(segment.text.strip() for segment in segments).strip()
+        try:
+            segments, _info = model.transcribe(
+                io.BytesIO(wav_bytes),
+                language=None,
+                vad_filter=False,
+                beam_size=1,
+                condition_on_previous_text=False,
+            )
+            return " ".join(segment.text.strip() for segment in segments).strip()
+        except Exception as exc:
+            if session_id and session_id in self._stats:
+                self._stats[session_id]["last_error"] = str(exc)
+            print(f"WHISPER_TRANSCRIBE_ERROR: {exc}", flush=True)
+            return ""
 
     def _load_model(self):
         if self._model is not None:
@@ -86,6 +113,7 @@ class MobileAudioTranscriptionService:
             )
         except Exception as exc:
             self._model_error = str(exc)
+            print(f"WHISPER_LOAD_ERROR: {exc}", flush=True)
             return None
         return self._model
 

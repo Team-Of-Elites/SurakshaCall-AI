@@ -60,6 +60,22 @@ async def session_qr_code(request: Request, session_id: str) -> PairingResponse:
     )
 
 
+@router.get("/api/v1/sessions/{session_id}/mobile-debug")
+async def mobile_debug(request: Request, session_id: str) -> dict:
+    state = request.app.state.session_manager.get_session(session_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return {
+        "session_id": session_id,
+        "queue_sizes": request.app.state.audio_queues.sizes(),
+        "recent_transcript_count": len(state.transcript_window),
+        "recent_transcript": [
+            item.model_dump(mode="json") for item in state.transcript_window[-5:]
+        ],
+        "mobile_transcriber": request.app.state.mobile_audio_transcriber.stats(),
+    }
+
+
 @router.websocket("/ws/mobile/{session_id}")
 async def mobile_audio_socket(websocket: WebSocket, session_id: str) -> None:
     manager = websocket.app.state.websocket_manager
@@ -70,6 +86,8 @@ async def mobile_audio_socket(websocket: WebSocket, session_id: str) -> None:
     await manager.connect(session_id, "mobile", websocket)
     state = sessions.get_session(session_id)
     if state:
+        state.input_mode = "mobile"
+        state.status = "active"
         mobile_audio.ensure_session(session_id)
         await websocket.send_text(
             make_event(EventType.SESSION_SNAPSHOT, session_id, sessions.snapshot(state)).model_dump_json()
@@ -82,6 +100,7 @@ async def mobile_audio_socket(websocket: WebSocket, session_id: str) -> None:
             if "bytes" in message and message["bytes"] is not None:
                 if sessions.get_session(session_id) is None:
                     continue
+                print(f"RECEIVED mobile PCM frame session={session_id} bytes={len(message['bytes'])}", flush=True)
                 await audio_queues.put_mobile_pcm(session_id, message["bytes"])
             elif "text" in message and message["text"]:
                 await _handle_mobile_control(websocket, session_id, message["text"])
