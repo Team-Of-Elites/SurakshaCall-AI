@@ -1,4 +1,4 @@
-# Rajyavardhan — Multi Agent Orchestration, FastAPI, WebSockets, and Real Time Backend
+# Rajyavardhan — Multi Agent AI Orchestration, FastAPI, WebSockets, and Real Time Backend
 
 > **Project:** SurakshaCall AI
 > **Member:** Rajyavardhan
