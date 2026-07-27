@@ -84,7 +84,7 @@ async def main():
     )
 
     if event:
-        print("✅ TranscriptEvent Emitted Successfully:")
+        print("[OK] TranscriptEvent Emitted Successfully:")
         print(f"  Utterance ID   : {event.utterance_id}")
         print(f"  Session ID     : {event.session_id}")
         print(f"  Text           : {event.text}")
@@ -92,7 +92,7 @@ async def main():
         print(f"  Confidence     : {event.asr_confidence}")
         print(f"  Input Mode     : {event.input_mode}")
     else:
-        print("❌ Transcription failed to emit event.")
+        print("[FAIL] Transcription failed to emit event.")
 
     print("==================================================")
 

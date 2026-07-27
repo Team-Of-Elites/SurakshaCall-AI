@@ -7,7 +7,7 @@ replay engine, and mobile input sources.
 
 import time
 from typing import Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class AudioFrame(BaseModel):
@@ -20,6 +20,7 @@ class AudioFrame(BaseModel):
     sample_width: int = 2
     pcm16: bytes
 
+    @computed_field
     @property
     def duration_ms(self) -> float:
         """Calculates frame duration in milliseconds."""
