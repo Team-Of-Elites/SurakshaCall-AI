@@ -92,6 +92,17 @@ async def mobile_audio_socket(websocket: WebSocket, session_id: str) -> None:
         await websocket.send_text(
             make_event(EventType.SESSION_SNAPSHOT, session_id, sessions.snapshot(state)).model_dump_json()
         )
+    else:
+        await websocket.send_text(
+            make_event(
+                EventType.SYSTEM_ERROR,
+                session_id,
+                {"message": "Session not found. Create a new session and reopen the phone URL."},
+            ).model_dump_json()
+        )
+        manager.disconnect(session_id, "mobile", websocket)
+        await websocket.close(code=1008)
+        return
     try:
         while True:
             message = await websocket.receive()
@@ -129,8 +140,11 @@ async def _handle_mobile_control(websocket: WebSocket, session_id: str, text: st
 
 
 def make_mobile_pusher(websocket_manager):
-    async def push_to_mobile(session_id: str, message: dict) -> None:
-        event_type = EventType.DECISION_UPDATE if message.get("type") == "decision_update" else EventType.SAFETY_WARNING
+    async def push_to_mobile(
+        session_id: str,
+        message: dict,
+        event_type: EventType = EventType.SAFETY_WARNING,
+    ) -> None:
         event = make_event(event_type, session_id, message)
         await websocket_manager.broadcast(event, kinds=("mobile",))
 

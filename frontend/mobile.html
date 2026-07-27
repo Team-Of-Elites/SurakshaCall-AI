@@ -50,6 +50,13 @@
         const message = JSON.parse(event.data);
         if (message.type === "safety_warning") {
           warningEl.textContent = message.payload.message || "Warning received from laptop.";
+        } else if (message.type === "decision_update") {
+          warningEl.textContent = message.payload.action || message.payload.explanation || "Decision update received.";
+        } else if (message.type === "system_error") {
+          statusEl.textContent = message.payload.message || "Connection error.";
+          startButton.disabled = true;
+        } else if (message.type === "session_snapshot") {
+          statusEl.textContent = "Connected. Tap Start Listening.";
         }
       } catch {
         statusEl.textContent = event.data;

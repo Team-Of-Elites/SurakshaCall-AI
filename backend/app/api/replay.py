@@ -1,9 +1,12 @@
+import asyncio
+from contextlib import suppress
 from pathlib import Path
 import wave
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from backend.app.audio.replay import TimedReplayEngine
 from backend.app.schemas.events import EventType, make_event
 
 router = APIRouter(prefix="/api/sessions", tags=["replay"])
@@ -35,19 +38,65 @@ async def start_replay(request: Request, session_id: str, replay: ReplayRequest)
         state = await request.app.state.session_manager.start_mode(session_id, "replay")
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found") from None
+
+    old_task = request.app.state.replay_tasks.pop(session_id, None)
+    if old_task and not old_task.done():
+        old_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await old_task
+
+    request.app.state.mobile_audio_transcriber.ensure_session(session_id)
+
+    async def on_frame(frame) -> None:
+        await request.app.state.audio_queues.put_audio_frame(frame)
+
+    async def run_replay() -> None:
+        engine = TimedReplayEngine()
+        try:
+            await request.app.state.session_manager.publish(
+                make_event(EventType.AUDIO_STATUS, session_id, {
+                    "input_mode": "replay",
+                    "status": "streaming",
+                    "file_name": replay.file_name,
+                    "speed": replay.speed,
+                    "duration_seconds": duration_seconds,
+                })
+            )
+            await engine.start_replay(
+                str(file_path),
+                session_id=session_id,
+                on_frame=on_frame,
+                speed_factor=replay.speed,
+            )
+            await request.app.state.session_manager.publish(
+                make_event(EventType.AUDIO_STATUS, session_id, {
+                    "input_mode": "replay",
+                    "status": "completed",
+                    "file_name": replay.file_name,
+                    "progress": 1.0,
+                })
+            )
+        except asyncio.CancelledError:
+            engine.stop()
+            await request.app.state.session_manager.publish(
+                make_event(EventType.AUDIO_STATUS, session_id, {
+                    "input_mode": "replay",
+                    "status": "stopped",
+                    "file_name": replay.file_name,
+                })
+            )
+            raise
+
+    request.app.state.replay_tasks[session_id] = asyncio.create_task(run_replay())
     await request.app.state.session_manager.publish(
-        make_event(
-            EventType.AUDIO_STATUS,
-            session_id,
-            {
-                "input_mode": "replay",
-                "status": "validated_pending_audio_worker",
-                "file_name": replay.file_name,
-                "speed": replay.speed,
-                "duration_seconds": duration_seconds,
-                "progress": 0.0,
-            },
-        )
+        make_event(EventType.AUDIO_STATUS, session_id, {
+            "input_mode": "replay",
+            "status": "queued",
+            "file_name": replay.file_name,
+            "speed": replay.speed,
+            "duration_seconds": duration_seconds,
+            "progress": 0.0,
+        })
     )
 
     return {
@@ -56,6 +105,6 @@ async def start_replay(request: Request, session_id: str, replay: ReplayRequest)
             "file_name": replay.file_name,
             "speed": replay.speed,
             "duration_seconds": duration_seconds,
-            "status": "validated_pending_audio_worker",
+            "status": "queued",
         },
     }
