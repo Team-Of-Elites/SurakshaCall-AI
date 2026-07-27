@@ -6,10 +6,12 @@ Prevents disk I/O, auto-evicts oldest samples, and supports retrieving pre-roll 
 """
 
 import threading
+from pydantic import BaseModel, computed_field
 
 
-class AudioRingBuffer:
+class AudioRingBuffer(BaseModel):
     def __init__(self, capacity_seconds: float = 20.0, sample_rate: int = 16000, sample_width: int = 2) -> None:
+        super().__init__()
         self.sample_rate = sample_rate
         self.sample_width = sample_width
         self.bytes_per_second = sample_rate * sample_width
@@ -39,11 +41,13 @@ class AudioRingBuffer:
         with self._lock:
             self._buffer.clear()
 
+    @computed_field
     @property
     def current_bytes(self) -> int:
         with self._lock:
             return len(self._buffer)
 
+    @computed_field
     @property
     def current_duration_seconds(self) -> float:
         with self._lock:
