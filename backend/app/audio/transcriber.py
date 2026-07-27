@@ -3,12 +3,14 @@ import io
 import wave
 from contextlib import suppress
 
-from backend.app.audio.queues import AudioFrame, AudioQueueRegistry
+from backend.app.audio.queues import AudioQueueRegistry
 from backend.app.config import Settings
 from backend.app.schemas.transcript import TranscriptIn
 
 
 class MobileAudioTranscriptionService:
+    """Consumes shared 16 kHz mono Int16 PCM queues and submits final transcripts."""
+
     def __init__(self, settings: Settings, audio_queues: AudioQueueRegistry, sessions) -> None:
         self.settings = settings
         self.audio_queues = audio_queues
@@ -60,7 +62,7 @@ class MobileAudioTranscriptionService:
                     pcm = bytes(buffer)
                     buffer.clear()
                     self._stats[session_id]["chunks_started"] = int(self._stats[session_id].get("chunks_started", 0)) + 1
-                    print(f"WHISPER chunk ready session={session_id} bytes={len(pcm)}", flush=True)
+                    print(f"WHISPER chunk ready session={session_id} source={frame.source} bytes={len(pcm)}", flush=True)
                     text = await self.transcribe_pcm(pcm, session_id=session_id)
                     self._stats[session_id]["chunks_finished"] = int(self._stats[session_id].get("chunks_finished", 0)) + 1
                     self._stats[session_id]["last_text"] = text

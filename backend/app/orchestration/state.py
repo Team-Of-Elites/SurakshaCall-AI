@@ -13,7 +13,7 @@ from backend.app.schemas.identity import (
 from backend.app.schemas.transcript import Utterance
 
 
-InputMode = Literal["idle", "microphone", "replay"]
+InputMode = Literal["idle", "microphone", "replay", "mobile"]
 SessionStatus = Literal["created", "active", "ended"]
 
 

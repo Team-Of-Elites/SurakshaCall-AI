@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 from typing import Any
 
 from backend.app.config import Settings
+from backend.app.orchestration.llm import deterministic_decision, try_llm_decision
 from backend.app.orchestration.routing import should_trigger_deep_analysis
 from backend.app.orchestration.state import CallState
-from backend.app.schemas.decision import RiskDecision, RiskSnapshot
+from backend.app.schemas.decision import RiskSnapshot
 from backend.app.schemas.evidence import EvidenceEvent
 from backend.app.schemas.events import EventType, make_event
 from backend.app.schemas.identity import CommunityMatch, IdentityClaim, VerificationResult
@@ -150,7 +151,13 @@ async def run_deep_analysis(state: CallState, settings: Settings) -> list[Any]:
         make_event(EventType.COMMUNITY_MATCH, state.session_id, community_result.model_dump(mode="json"))
     )
 
-    decision = aggregate_decision(state)
+    decision = await try_llm_decision(state, settings)
+    state.llm_available = decision is not None
+    if decision is None:
+        decision = deterministic_decision(state)
+    state.current_risk = max(state.current_risk, decision.risk)
+    state.current_level = decision.level
+    events.append(make_event(EventType.DECISION_UPDATE, state.session_id, decision.model_dump(mode="json")))
     events.append(make_event(EventType.RISK_UPDATE, state.session_id, decision.model_dump(mode="json")))
     return events
 
@@ -184,22 +191,3 @@ async def match_community(state: CallState) -> CommunityMatch:
         )
     return CommunityMatch()
 
-
-def aggregate_decision(state: CallState) -> RiskDecision:
-    evidence_ids = [item.evidence_id for item in state.evidence_events[-8:]]
-    action = "Continue monitoring."
-    explanation = "No high-risk pattern confirmed yet."
-    if state.current_level == "CRITICAL":
-        action = "End the call and verify through an official number."
-        explanation = "Critical scam indicators were detected in the conversation."
-    elif state.current_level == "HIGH":
-        action = "Do not share sensitive information; verify independently."
-        explanation = "Multiple risky tactics were detected."
-    return RiskDecision(
-        session_id=state.session_id,
-        risk=state.current_risk,
-        level=state.current_level,
-        action=action,
-        explanation=explanation,
-        evidence_ids=evidence_ids,
-    )

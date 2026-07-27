@@ -1,4 +1,5 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 
@@ -14,23 +15,32 @@ from backend.app.websocket.manager import WebSocketManager
 async def lifespan(app: FastAPI):
     settings = get_settings()
     app.state.settings = settings
+    app.state.loop = asyncio.get_running_loop()
     app.state.websocket_manager = WebSocketManager(settings.websocket_max_payload_bytes)
     app.state.session_manager = SessionManager(settings, app.state.websocket_manager)
-    app.state.session_manager.mobile_pusher = make_mobile_pusher(
-        app.state.websocket_manager
-    )
+    app.state.session_manager.mobile_pusher = make_mobile_pusher(app.state.websocket_manager)
     app.state.audio_queues = AudioQueueRegistry(settings.max_queue_size)
     app.state.mobile_audio_transcriber = MobileAudioTranscriptionService(
         settings=settings,
         audio_queues=app.state.audio_queues,
         sessions=app.state.session_manager,
     )
+    app.state.replay_tasks = {}
+    app.state.microphone_captures = {}
     app.state.diagnostics = {
         "database": "memory-only",
-        "whisper": "not_started",
+        "whisper": "ready",
         "local_llm": "not_required",
         "microphone": "not_started",
     }
-    yield
-    await app.state.mobile_audio_transcriber.shutdown()
-    await app.state.session_manager.shutdown()
+    try:
+        yield
+    finally:
+        for task in list(app.state.replay_tasks.values()):
+            task.cancel()
+            with suppress(asyncio.CancelledError):
+                await task
+        for capture in list(app.state.microphone_captures.values()):
+            capture.stop()
+        await app.state.mobile_audio_transcriber.shutdown()
+        await app.state.session_manager.shutdown()

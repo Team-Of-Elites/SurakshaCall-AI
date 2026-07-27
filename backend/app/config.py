@@ -35,6 +35,8 @@ class Settings(BaseModel):
     clear_session_on_end: bool = Field(default=True)
     mobile_transcription_chunk_seconds: float = Field(default=3.0)
     test_transcript_override: str | None = Field(default=None)
+    microphone_capture_enabled: bool = Field(default=False)
+    local_llm_enabled: bool = Field(default=False)
 
 
 def _bool_from_env(value: str | None, default: bool) -> bool:
@@ -94,4 +96,12 @@ def get_settings() -> Settings:
             )
         ),
         test_transcript_override=os.getenv("MOBILE_TEST_TRANSCRIPT"),
+        microphone_capture_enabled=_bool_from_env(
+            os.getenv("MICROPHONE_CAPTURE_ENABLED"),
+            defaults.microphone_capture_enabled,
+        ),
+        local_llm_enabled=_bool_from_env(
+            os.getenv("LOCAL_LLM_ENABLED"),
+            defaults.local_llm_enabled,
+        ),
     )

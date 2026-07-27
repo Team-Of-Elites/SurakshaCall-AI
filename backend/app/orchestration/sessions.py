@@ -96,7 +96,7 @@ class SessionManager:
             event.sequence = state.next_sequence()
         if event.type in {EventType.SAFETY_WARNING, EventType.DECISION_UPDATE} and self.mobile_pusher:
             await self.websocket_manager.broadcast(event, kinds=("dashboard",))
-            await self.mobile_pusher(event.session_id, event.payload)
+            await self.mobile_pusher(event.session_id, event.payload, event.type)
             return
         await self.websocket_manager.broadcast(event)
 
