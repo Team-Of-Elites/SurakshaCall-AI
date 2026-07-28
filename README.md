@@ -1,4 +1,4 @@
-﻿<h1 align="center">🛡️ SurakshaCall AI</h1>
+<h1 align="center">🛡️ SurakshaCall AI</h1>
 <h3 align="center">Privacy-First Real-Time Scam Call Behavioral Analyzer</h3>
 
 <p align="center">
