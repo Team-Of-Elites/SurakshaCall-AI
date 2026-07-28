@@ -1,0 +1,30 @@
+- id: remote.anydesk.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect AnyDesk installation requests"
+  label: REMOTE_ACCESS
+  severity: 5
+  confidence: 0.99
+  score_delta: 30
+  risk_floor: 85
+  action_code: DO_NOT_INSTALL_REMOTE_APP
+  conditions:
+    any:
+      - type: concept
+        value: REMOTE_ACCESS
+
+- id: remote.screen_share.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect screen sharing requests"
+  label: SCREEN_SHARE
+  severity: 4
+  confidence: 0.95
+  score_delta: 20
+  risk_floor: 70
+  conditions:
+    any:
+      - type: concept
+        value: SCREEN_SHARE

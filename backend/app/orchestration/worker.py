@@ -32,8 +32,9 @@ class SessionWorker:
         while True:
             utterance = await self.queue.get()
             try:
-                events = await process_utterance(self.state, utterance, self.settings)
-                for event in events:
-                    await self.broadcaster(event)
+                events = await process_utterance(self.state, utterance, self.settings, broadcaster=self.broadcaster)
+                if not self.broadcaster:
+                    for event in events:
+                        await self.broadcaster(event)
             finally:
                 self.queue.task_done()

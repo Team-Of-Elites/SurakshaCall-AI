@@ -4,7 +4,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
-
 VerificationStatus = Literal[
     "VERIFIED", "UNVERIFIED", "CONTRADICTORY", "INSUFFICIENT_DATA"
 ]
@@ -24,6 +23,7 @@ class VerificationResult(BaseModel):
     claim_id: str | None = None
     status: VerificationStatus = "INSUFFICIENT_DATA"
     reason: str = "No trusted-directory result available."
+    risk_contribution: int = 0
     checked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 

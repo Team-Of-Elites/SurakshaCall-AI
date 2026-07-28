@@ -6,14 +6,18 @@ Task: L-07
 THIS IS THE TEAM API CONTRACT.
 All other modules consume the output of detect() from this file.
 """
-from dataclasses import dataclass, field
-from typing import List, Optional
+from pathlib import Path
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
-from .rules import run_rules, DetectionEvent
-from .normalizer import normalize, NormalizedUtterance
-from .safe_advice import filter_safe_advice
-from .labels import CRITICAL_LABELS, SEVERITY
+from backend.app.detection.labels import CRITICAL_LABELS, SEVERITY
+from backend.app.detection.rules import run_rules
+from backend.app.detection.safe_advice import filter_safe_advice
+from backend.app.language.normalizer import normalize as language_normalize
+from backend.app.rules.engine import evaluate_rules
+from backend.app.rules.loader import load_rules_from_yaml
+from backend.app.rules.temporal import evaluate_temporal_rules
 
 
 class DetectionResult(BaseModel):
@@ -21,32 +25,56 @@ class DetectionResult(BaseModel):
     utterance_normalized: str = ""
     utterance_redacted: str = ""
     language: str = "en"
-    events: List[dict] = Field(default_factory=list)
-    detected_labels: List[str] = Field(default_factory=list)
-    is_critical: bool = False            # True if any CRITICAL_LABELS detected
-    max_severity: int = 0                # 0–5
-    trigger_llm: bool = False            # Whether this result should invoke the LLM
+    events: list[dict] = Field(default_factory=list)
+    detected_labels: list[str] = Field(default_factory=list)
+    is_critical: bool = False
+    max_severity: int = 0
+    trigger_llm: bool = False
     safe_advice_detected: bool = False
     confidence: float = 1.0
 
 
+_RULES_CACHE: list | None = None
+
+
+def _get_yaml_rules():
+    global _RULES_CACHE
+    if _RULES_CACHE is None:
+        rules_dir = Path(__file__).parent.parent.parent.parent / "data" / "rules"
+        if rules_dir.exists():
+            _RULES_CACHE = load_rules_from_yaml(rules_dir)
+        else:
+            _RULES_CACHE = []
+    return _RULES_CACHE
+
+
 def detect(raw_text: str, language: Optional[str] = None) -> DetectionResult:
-    """
-    Main entry point.
-    Run normalization → rules → safe-advice filter → build result.
-    """
-    norm = normalize(raw_text, language)
+    norm = language_normalize(raw_text, language)
+    normalized_text = norm.normalized_text
 
-    # Run deterministic rules
-    rule_events = run_rules(norm.normalized_text)
+    rule_events = run_rules(normalized_text)
 
-    # Extract labels from rule events
+    yaml_rules = _get_yaml_rules()
+    if yaml_rules:
+        yaml_matches = evaluate_rules(norm, yaml_rules)
+        for match in yaml_matches:
+            if not any(e.label == match.label for e in rule_events):
+                from backend.app.detection.rules import DetectionEvent as DE
+                rule_events.append(DE(
+                    event_id=f"evt_yaml_{len(rule_events):04d}",
+                    label=match.label,
+                    confidence=match.confidence,
+                    severity=match.severity,
+                    source="rule",
+                    quote=match.evidence_quote,
+                    rule_id=match.rule_id,
+                ))
+
     detected_labels = list({e.label for e in rule_events})
 
-    # Safe advice filter — prevents false positives
     safe_advice = False
-    if detected_labels or norm.normalized_text:
-        filtered = filter_safe_advice(norm.normalized_text, detected_labels)
+    if detected_labels or normalized_text:
+        filtered = filter_safe_advice(normalized_text, detected_labels)
         if filtered != detected_labels:
             safe_advice = True
             detected_labels = filtered
@@ -54,8 +82,6 @@ def detect(raw_text: str, language: Optional[str] = None) -> DetectionResult:
 
     is_critical = bool(CRITICAL_LABELS & set(detected_labels))
     max_severity = max((SEVERITY.get(lbl, 0) for lbl in detected_labels), default=0)
-
-    # Trigger LLM if critical, or if 2+ labels detected
     trigger_llm = is_critical or len(detected_labels) >= 2
 
     events_dict = [
@@ -72,9 +98,9 @@ def detect(raw_text: str, language: Optional[str] = None) -> DetectionResult:
     ]
 
     return DetectionResult(
-        utterance_normalized=norm.normalized_text,
+        utterance_normalized=normalized_text,
         utterance_redacted=norm.redacted_text,
-        language=norm.language,
+        language=norm.language_mode if hasattr(norm, 'language_mode') else (language or "en"),
         events=events_dict,
         detected_labels=detected_labels,
         is_critical=is_critical,

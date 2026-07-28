@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    container_name: surakshacall-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - LOCAL_NETWORK_MODE=false
+      - WHISPER_MODEL=small
+      - WHISPER_COMPUTE_TYPE=int8
+      - WHISPER_DEVICE=cpu
+      - LLM_MODEL=qwen3:4b
+      - LOCAL_LLM_ENABLED=false
+      - MICROPHONE_CAPTURE_ENABLED=false
+      - SESSION_TOKEN=local-dev-token
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    restart: unless-stopped
+
+  frontend:
+    image: python:3.11-slim
+    container_name: surakshacall-frontend
+    ports:
+      - "5173:5173"
+    working_dir: /app
+    command: python -m http.server 5173 --bind 0.0.0.0
+    volumes:
+      - ./frontend:/app
+    restart: unless-stopped
+    depends_on:
+      - backend

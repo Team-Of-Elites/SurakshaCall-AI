@@ -1,5 +1,6 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
+from backend.app.config import get_settings
 from backend.app.schemas.events import EventType, make_event
 
 router = APIRouter()
@@ -7,6 +8,12 @@ router = APIRouter()
 
 @router.websocket("/ws/dashboard/{session_id}")
 async def dashboard_socket(websocket: WebSocket, session_id: str) -> None:
+    token = websocket.query_params.get("token", "")
+    settings = get_settings()
+    if settings.session_token and token != settings.session_token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid or missing session token")
+        return
+
     manager = websocket.app.state.websocket_manager
     sessions = websocket.app.state.session_manager
     await manager.connect(session_id, "dashboard", websocket)
@@ -24,7 +31,7 @@ async def dashboard_socket(websocket: WebSocket, session_id: str) -> None:
             ).model_dump_json()
         )
         manager.disconnect(session_id, "dashboard", websocket)
-        await websocket.close(code=1008)
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     try:
         while True:
