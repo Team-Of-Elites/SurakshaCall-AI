@@ -6,24 +6,31 @@ Prevents disk I/O, auto-evicts oldest samples, and supports retrieving pre-roll 
 """
 
 import threading
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, PrivateAttr, computed_field
 
 
 class AudioRingBuffer(BaseModel):
-    def __init__(self, capacity_seconds: float = 20.0, sample_rate: int = 16000, sample_width: int = 2) -> None:
-        super().__init__()
-        self.sample_rate = sample_rate
-        self.sample_width = sample_width
-        self.bytes_per_second = sample_rate * sample_width
-        self.max_bytes = int(capacity_seconds * self.bytes_per_second)
-        self._buffer = bytearray()
-        self._lock = threading.Lock()
+    capacity_seconds: float = 20.0
+    sample_rate: int = 16000
+    sample_width: int = 2
+
+    _buffer: bytearray = PrivateAttr(default_factory=bytearray)
+    _lock: threading.Lock = PrivateAttr(default_factory=threading.Lock)
+
+    @property
+    def bytes_per_second(self) -> int:
+        return self.sample_rate * self.sample_width
+
+    @property
+    def max_bytes(self) -> int:
+        return int(self.capacity_seconds * self.bytes_per_second)
 
     def append(self, pcm: bytes) -> None:
         with self._lock:
             self._buffer.extend(pcm)
-            if len(self._buffer) > self.max_bytes:
-                overflow = len(self._buffer) - self.max_bytes
+            max_b = self.max_bytes
+            if len(self._buffer) > max_b:
+                overflow = len(self._buffer) - max_b
                 del self._buffer[:overflow]
 
     def get_pre_roll(self, duration_ms: int = 250) -> bytes:
@@ -52,3 +59,4 @@ class AudioRingBuffer(BaseModel):
     def current_duration_seconds(self) -> float:
         with self._lock:
             return len(self._buffer) / float(self.bytes_per_second)
+
