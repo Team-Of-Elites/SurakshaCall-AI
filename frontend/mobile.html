@@ -34,6 +34,7 @@
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/mobile/${sessionId}`);
     socket.binaryType = "arraybuffer";
+    let sentFrames = 0;
 
     socket.addEventListener("open", () => {
       statusEl.textContent = "Connected. Tap Start Listening.";
@@ -49,6 +50,13 @@
         const message = JSON.parse(event.data);
         if (message.type === "safety_warning") {
           warningEl.textContent = message.payload.message || "Warning received from laptop.";
+        } else if (message.type === "decision_update") {
+          warningEl.textContent = message.payload.action || message.payload.explanation || "Decision update received.";
+        } else if (message.type === "system_error") {
+          statusEl.textContent = message.payload.message || "Connection error.";
+          startButton.disabled = true;
+        } else if (message.type === "session_snapshot") {
+          statusEl.textContent = "Connected. Tap Start Listening.";
         }
       } catch {
         statusEl.textContent = event.data;
@@ -69,13 +77,13 @@
         await streamAudio(stream);
         statusEl.textContent = "Listening and streaming to laptop.";
       } catch (error) {
-        statusEl.textContent = `Microphone failed: ${error.name || error.message}`;
+        statusEl.textContent = `Microphone failed: ${error.name || "Error"} ${error.message || ""}`;
         startButton.disabled = false;
       }
     });
 
     async function streamAudio(stream) {
-      const audioContext = new AudioContext();
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const source = audioContext.createMediaStreamSource(stream);
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       source.connect(processor);
@@ -85,6 +93,10 @@
         const input = event.inputBuffer.getChannelData(0);
         const downsampled = downsample(input, audioContext.sampleRate, 16000);
         socket.send(floatToInt16(downsampled));
+        sentFrames += 1;
+        if (sentFrames % 20 === 0) {
+          statusEl.textContent = `Listening. Sent ${sentFrames} audio frames to laptop.`;
+        }
       };
     }
 
