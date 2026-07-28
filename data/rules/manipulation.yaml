@@ -1,0 +1,101 @@
+- id: manipulation.authority.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect authority claims"
+  label: AUTHORITY_CLAIM
+  severity: 3
+  confidence: 0.9
+  score_delta: 12
+  conditions:
+    any:
+      - type: concept
+        value: AUTHORITY_CLAIM
+
+- id: manipulation.fear_threat.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect fear and threat language"
+  label: FEAR_THREAT
+  severity: 4
+  confidence: 0.9
+  score_delta: 18
+  risk_floor: 60
+  conditions:
+    any:
+      - type: concept
+        value: ARREST_THREAT
+      - type: concept
+        value: ACCOUNT_THREAT
+      - type: regex
+        value: "(account|account).{0,30}(freeze|frozen|block|blocked|suspend|suspended|seize|seized|close|closed|deactivate|deactivated)"
+      - type: regex
+        value: "(non.?bailable|warrant|fir|legal action|case filed|court|jail|prison)"
+      - type: regex
+        value: "(गिरफ्तार|वारंट|कोर्ट|जेल|एफआईआर|केस).{0,50}(होगा|है|करेंगे)"
+
+- id: manipulation.urgency.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect urgency pressure"
+  label: URGENCY
+  severity: 3
+  confidence: 0.85
+  score_delta: 10
+  conditions:
+    any:
+      - type: concept
+        value: URGENCY
+      - type: regex
+        value: "within.{0,10}(minutes?|hours?|दिन|घंटे|मिनट)"
+      - type: regex
+        value: "(expires?|expire|expiry|expiration|समय.{0,20}(खत्म|समाप्त))"
+
+- id: manipulation.isolation.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect isolation enforcement"
+  label: ISOLATION
+  severity: 4
+  confidence: 0.9
+  score_delta: 18
+  risk_floor: 60
+  conditions:
+    any:
+      - type: concept
+        value: ISOLATION
+
+- id: manipulation.channel_switch.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect channel switching pressure"
+  label: CHANNEL_SWITCH
+  severity: 2
+  confidence: 0.8
+  score_delta: 8
+  conditions:
+    any:
+      - type: regex
+        value: "(whatsapp|telegram|video call|skype|zoom|google meet|screen share app)"
+      - type: regex
+        value: "(switch|move|transfer|shift).{0,20}(to|ko|पर)"
+
+- id: manipulation.reward_scarcity.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect reward/scarcity tactics"
+  label: REWARD_SCARCITY
+  severity: 2
+  confidence: 0.75
+  score_delta: 8
+  conditions:
+    any:
+      - type: regex
+        value: "(won|winner|prize|lucky|lottery|congratulations|selected|exclusive|limited time|last chance)"
+      - type: regex
+        value: "(40%.*return|guaranteed.*profit|risk.*free|no.*risk.*investment)"

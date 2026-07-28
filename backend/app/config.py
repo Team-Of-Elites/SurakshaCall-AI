@@ -33,7 +33,7 @@ class Settings(BaseModel):
     whisper_compute_type: str = Field(default="int8")
     llm_model: str = Field(default="qwen3:4b")
     clear_session_on_end: bool = Field(default=True)
-    mobile_transcription_chunk_seconds: float = Field(default=3.0)
+    mobile_transcription_chunk_seconds: float = Field(default=1.0)
     test_transcript_override: str | None = Field(default=None)
     microphone_capture_enabled: bool = Field(default=False)
     local_llm_enabled: bool = Field(default=False)

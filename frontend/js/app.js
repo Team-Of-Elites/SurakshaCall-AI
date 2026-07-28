@@ -1,5 +1,5 @@
 (function () {
-  const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
+  const DEFAULT_BASE_URL = (window.location.protocol.startsWith("http") && window.location.origin && window.location.origin !== "null") ? window.location.origin : "http://127.0.0.1:8000";
   const STORAGE_KEY = "suraksha.backendBaseUrl";
   const MAX_EVENTS = 80;
 
@@ -577,13 +577,15 @@
   function renderRisk() {
     const level = normalizeLevel(state.level);
     const risk = coerceRisk(state.risk);
-    els.riskPanel.className = `risk-panel level-${level.toLowerCase()}`;
-    els.riskLevel.textContent = level;
-    els.riskHeadline.textContent = state.headline || headlineForLevel(level, risk);
-    els.riskScore.textContent = String(risk);
+    if (els.riskPanel) els.riskPanel.className = `risk-card level-${level.toLowerCase()}`;
+    if (els.riskLevel) els.riskLevel.textContent = level;
+    if (els.riskHeadline) els.riskHeadline.textContent = state.headline || headlineForLevel(level, risk);
+    if (els.riskScore) els.riskScore.textContent = String(risk);
     const circumference = 314;
-    els.riskCircle.style.strokeDashoffset = String(circumference - (circumference * risk) / 100);
-    els.riskCircle.style.stroke = colorForLevel(level);
+    if (els.riskCircle) {
+      els.riskCircle.style.strokeDashoffset = String(circumference - (circumference * risk) / 100);
+      els.riskCircle.style.stroke = colorForLevel(level);
+    }
   }
 
   function renderTranscript() {

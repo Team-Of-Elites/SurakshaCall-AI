@@ -1,0 +1,44 @@
+- id: temporal.threat_payment_isolation.v1
+  version: 1
+  enabled: true
+  within_seconds: 60
+  requires:
+    - FEAR_THREAT
+    - PAYMENT_REQUEST
+    - ISOLATION
+  severity: 5
+  score_delta: 25
+  risk_floor: 90
+
+- id: temporal.authority_secret.v1
+  version: 1
+  enabled: true
+  within_seconds: 45
+  requires:
+    - AUTHORITY_CLAIM
+    - SECRET_REQUEST
+  severity: 5
+  score_delta: 20
+  risk_floor: 85
+
+- id: temporal.payment_urgency.v1
+  version: 1
+  enabled: true
+  within_seconds: 30
+  requires:
+    - PAYMENT_REQUEST
+    - URGENCY
+  severity: 4
+  score_delta: 15
+  risk_floor: 75
+
+- id: temporal.remote_secret.v1
+  version: 1
+  enabled: true
+  within_seconds: 30
+  requires:
+    - REMOTE_ACCESS
+    - SECRET_REQUEST
+  severity: 5
+  score_delta: 25
+  risk_floor: 90

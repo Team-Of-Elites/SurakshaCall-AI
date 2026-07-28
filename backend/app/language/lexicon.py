@@ -1,0 +1,138 @@
+CONCEPT_ALIASES: dict[str, list[str]] = {
+    "OTP": [
+        "otp", "one time password", "one-time code", "one time code",
+        "verification code", "confirmation code", "security code",
+        "ओटीपी", "वन टाइम पासवर्ड", "सत्यापन कोड",
+        "otp batao", "code batao",
+    ],
+    "ONE_TIME_CODE": [
+        "six digit code", "6 digit code", "six digit number", "6 digit number",
+        "six digits", "6 digits", "message wala number", "message ka number",
+        "code aaya hai", "jo code aaya", "chhe ank", "छह अंक",
+        "six digital code", "six digit message",
+    ],
+    "PIN": [
+        "pin", "pin code", "secret pin", "upi pin", "atm pin",
+        "पिन", "पिन कोड", "यूपीआई पिन",
+    ],
+    "CVV": [
+        "cvv", "cvc", "security code", "card verification value",
+    ],
+    "PASSWORD": [
+        "password", "passcode", "login password", "account password",
+        "पासवर्ड", "पासकोड",
+    ],
+    "REMOTE_ACCESS": [
+        "anydesk", "any desk", "anidesk", "teamviewer", "team viewer",
+        "quicksupport", "quick support", "rustdesk", "rust desk",
+        "remote access", "remote control", "screen share",
+        "एनीडेस्क", "टीमव्यूअर", "रिमोट एक्सेस",
+        "install app", "install application",
+    ],
+    "SCREEN_SHARE": [
+        "share screen", "screen share", "share your screen",
+        "screen dikhao", "स्क्रीन शेयर", "स्क्रीन दिखाओ",
+    ],
+    "SAFE_ACCOUNT": [
+        "safe account", "verification account", "security account",
+        "temporary account", "government account", "safe government account",
+        "सेफ अकाउंट", "सुरक्षित खाता",
+    ],
+    "TRANSFER_MONEY": [
+        "transfer", "send money", "transfer money", "send funds",
+        "deposit", "payment", "pay", "rupees", "rs", "inr",
+        "पैसे ट्रांसफर", "पैसे भेजो", "रुपये", "भुगतान",
+    ],
+    "UPI_COLLECT": [
+        "collect request", "upi collect", "approve request", "accept request",
+        "upi request", "payment request", "upi pin enter",
+        "यूपीआई कलेक्ट", "कलेक्ट रिक्वेस्ट",
+    ],
+    "QR_SCAN": [
+        "scan qr", "qr code", "scan this qr", "scan karo",
+        "क्यूआर कोड", "क्यूआर स्कैन",
+    ],
+    "AUTHORITY_CLAIM": [
+        "cbi", "central bureau", "rbi", "reserve bank",
+        "sbi", "state bank", "hdfc", "icici", "axis", "pnb",
+        "police", "cyber crime", "cybercell", "cyber cell",
+        "enforcement directorate", "income tax", "customs",
+        "trai", "telecom regulatory",
+        "सीबीआई", "आरबीआई", "पुलिस", "साइबर क्राइम",
+    ],
+    "ARREST_THREAT": [
+        "arrest", "arrested", "warrant", "non bailable", "nbw",
+        "fir", "legal action", "court", "jail", "prison",
+        "गिरफ्तारी", "वारंट", "कोर्ट", "जेल",
+    ],
+    "ACCOUNT_THREAT": [
+        "freeze", "frozen", "block", "blocked", "suspend", "suspended",
+        "seize", "seized", "close", "closed", "deactivate", "deactivated",
+        "फ्रीज", "ब्लॉक", "बंद",
+    ],
+    "ISOLATION": [
+        "do not tell", "don't tell", "do not inform", "don't inform",
+        "do not contact", "don't contact", "do not share",
+        "kisi ko mat batana", "kisi ko mat batao",
+        "किसी को मत बताना", "किसी को मत बताओ",
+        "do not disconnect", "don't disconnect",
+        "stay on call", "stay on line", "call cut mat karna",
+        "कॉल मत काटना",
+    ],
+    "URGENCY": [
+        "immediately", "right now", "urgent", "hurry",
+        "within minutes", "within hours", "as soon as possible",
+        "abhi", "turant", "jaldi",
+        "अभी", "तुरंत", "जल्दी",
+        "time limit", "expire", "last chance",
+    ],
+    "SAFE_ADVICE": [
+        "never share", "never tell", "never give", "never disclose",
+        "do not share", "do not give", "do not tell",
+        "bank never asks", "bank never calls",
+        "kabhi mat batana", "kabhi share mat karo",
+        "कभी मत बताना", "कभी शेयर मत करो",
+        "protect your", "keep your", "be careful", "beware",
+        "report to", "call 1930", "helpline",
+    ],
+    "REFUSAL": [
+        "will not share", "won't share", "will not tell", "won't tell",
+        "will not give", "won't give", "cannot share",
+        "nahi bataunga", "nahi dungi", "nahi karunga",
+        "नहीं बताऊंगा", "नहीं दूंगा",
+    ],
+}
+
+NUMBER_WORDS: dict[str, str] = {
+    "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+    "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+    "ten": "10", "twenty": "20", "thirty": "30", "forty": "40", "fifty": "50",
+    "sixty": "60", "seventy": "70", "eighty": "80", "ninety": "90",
+    "hundred": "100", "thousand": "1000",
+    "एक": "1", "दो": "2", "तीन": "3", "चार": "4",
+    "पांच": "5", "छह": "6", "सात": "7", "आठ": "8",
+    "नौ": "9", "दस": "10",
+}
+
+ASR_CORRECTIONS: dict[str, str] = {
+    "digital": "digit",
+    "digitial": "digit",
+    "digatal": "digit",
+    "passward": "password",
+    "passwerd": "password",
+    "otb": "otp",
+    "o t p": "otp",
+    "any desk": "anydesk",
+    "ani desk": "anydesk",
+    "team viewer": "teamviewer",
+    "rust desk": "rustdesk",
+    "up i pin": "upi pin",
+    "upi pain": "upi pin",
+    "c v v": "cvv",
+    "c v c": "cvc",
+    "rupaye": "rupees",
+    "rupay": "rupees",
+    "acount": "account",
+    "verifcation": "verification",
+    "varification": "verification",
+}

@@ -1,0 +1,68 @@
+- id: payment.safe_account.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect safe/verification account transfer requests"
+  label: PAYMENT_REQUEST
+  severity: 5
+  confidence: 0.99
+  score_delta: 28
+  risk_floor: 85
+  action_code: DO_NOT_TRANSFER_MONEY
+  conditions:
+    any:
+      - type: concept
+        value: SAFE_ACCOUNT
+      - type: concept
+        value: TRANSFER_MONEY
+  exclusions:
+    any:
+      - type: speech_act
+        value: ADVICE
+
+- id: payment.upi_collect.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect UPI collect request scams"
+  label: PAYMENT_REQUEST
+  severity: 5
+  confidence: 0.99
+  score_delta: 25
+  risk_floor: 85
+  conditions:
+    any:
+      - type: concept
+        value: UPI_COLLECT
+
+- id: payment.qr_scan.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect QR code scan payment scams"
+  label: PAYMENT_REQUEST
+  severity: 5
+  confidence: 0.95
+  score_delta: 25
+  risk_floor: 80
+  conditions:
+    any:
+      - type: concept
+        value: QR_SCAN
+
+- id: payment.transfer_fee.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect payment/release fee requests"
+  label: PAYMENT_REQUEST
+  severity: 4
+  confidence: 0.9
+  score_delta: 20
+  risk_floor: 70
+  conditions:
+    any:
+      - type: regex
+        value: "(release|clearance|customs|delivery|registration|processing).{0,20}(fee|charge|amount|payment)"
+      - type: regex
+        value: "(fee|charge).{0,30}(pay|pay karo|transfer|send|भेजो|दो)"

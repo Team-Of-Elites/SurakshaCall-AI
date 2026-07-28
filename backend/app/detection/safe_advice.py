@@ -1,57 +1,31 @@
-﻿"""
-SurakshaCall AI — Safe Advice Detector (English Only)
-Owner: Lakshay
-Task: L-05
-
-Prevents protective statements from being flagged as scam indicators.
-Three detection layers:
-  1. Negation patterns: "never share your OTP", "don't give your PIN"
-  2. Question patterns: "did you receive an OTP?" (not a demand)
-  3. Reporting patterns: "report to cybercrime" context
-"""
-import re
+﻿import re
 from typing import List
 
-# ── Layer 1: Negation / protective warnings ─────────────────────────────────
 SAFE_NEGATION_PATTERNS = [
-    # "never share your OTP", "don't give your PIN"
-    re.compile(r"(never|don.?t|do not|never ever).{0,30}(share|give|tell|disclose).{0,30}(otp|pin|cvv|password|code|credential)", re.I),
-    # Reverse: "OTP should never be shared"
-    re.compile(r"(otp|pin|cvv|password|code|credential).{0,30}(never|don.?t|do not|never ever).{0,20}(share|give|tell|disclose)", re.I),
-    # "bank never asks" / "staff will never ask" / "will ever ask"
-    re.compile(r"(bank|staff|officer|employee|we).{0,40}(never|never asks?|won.?t|will not|does not|will ever).{0,20}(ask|request|demand)", re.I),
-    # "protect/keep your OTP"
-    re.compile(r"(protect|keep|save|guard).{0,20}(your\s*)?(otp|pin|password|code|cvv)", re.I),
-    # "legitimate/real org never asks"
-    re.compile(r"(legitimate|real|official|genuine).{0,30}(never|won.?t|will not|does not).{0,20}(ask|request)", re.I),
-    # "be careful with your OTP"
-    re.compile(r"(be\s*careful|beware|stay\s*alert|be\s*aware|caution).{0,40}(otp|pin|cvv|password|code|credential)", re.I),
+    re.compile(r"(never|don.?t|do not|never ever|kabhi|कभी).{0,30}(share|give|tell|disclose|batana|batao|bataiye|bataen|dena|दो|बताओ|बताइए|बताएं|बताना).{0,30}(otp|pin|cvv|password|code|credential|पिन|कोड)", re.I),
+    re.compile(r"(otp|pin|cvv|password|code|पिन|कोड).{0,30}(never|don.?t|do not|kabhi|कभी|nahi|नहीं|mat|मत).{0,30}(share|give|tell|disclose|batana|batao|bataiye|bataen|dena|दो|बताओ|बताइए|बताएं|बताना)", re.I),
+    re.compile(r"(kabhi|कभी).{0,30}(otp|pin|code|पिन|कोड).{0,30}(mat|nahi|मत|नहीं).{0,30}(batana|batao|bataiye|bataen|dena|बताओ|बताइए|बताएं|बताना|दो|देना)", re.I),
+    re.compile(r"(bank|staff|officer|employee|we|hum|हम).{0,40}(never|kabhi|कभी|nahi|नहीं).{0,20}(ask|request|demand|mangte|mangta|पूछते|माँगते)", re.I),
+    re.compile(r"(protect|keep|save|guard|बचाओ|रखो).{0,20}(your\s*)?(otp|pin|password|code|cvv|पिन|कोड)", re.I),
+    re.compile(r"(legitimate|real|official|genuine|असली|सरकारी).{0,30}(never|kabhi|कभी).{0,20}(ask|request|mangte|माँगते)", re.I),
+    re.compile(r"(be\s*careful|beware|stay\s*alert|caution|सावधान).{0,40}(otp|pin|cvv|password|code|पिन|कोड)", re.I),
+    re.compile(r"(report|call|contact|सूचना|रिपोर्ट).{0,20}(1930|cybercrime|police|helpline|साइबर|पुलिस)", re.I),
+    re.compile(r"(will not|won't|cannot|can't|nahi|नहीं).{0,20}(share|give|tell|bataunga|bataungi|dunga|dungi|batana|दूंगा|बताऊंगा)", re.I),
 ]
 
-# ── Layer 2: Question-form / non-demand mentions ────────────────────────────
 SAFE_QUESTION_PATTERNS = [
-    # "did you receive an OTP" — inquiry, not demand
-    re.compile(r"(did\s*you|have\s*you).{0,20}(receive|get).{0,15}(otp|code|pin|message)", re.I),
-    # "if anyone asks for your PIN" — hypothetical warning
-    re.compile(r"(if\s*(any|some)one).{0,30}(asks?|request).{0,15}(otp|pin|cvv|password|code)", re.I),
-    # "no need to share"
-    re.compile(r"no\s*need\s*to\s*(share|give|tell|send)", re.I),
+    re.compile(r"(did\s*you|have\s*you|kya|क्या).{0,20}(receive|get|mila|aaya|aayi|मिला|आया).{0,15}(otp|code|pin|message|कोड)", re.I),
+    re.compile(r"(if\s*(any|some)one|agar\s*koi|अगर\s*कोई).{0,30}(asks?|request|mange|माँगे).{0,15}(otp|pin|cvv|password|code|पिन|कोड)", re.I),
+    re.compile(r"no\s*need\s*to\s*(share|give|tell|send|बताना|देना)", re.I),
 ]
 
-# ── Layer 3: Reporting / cybercrime context ──────────────────────────────────
 SAFE_REPORTING_PATTERNS = [
-    # "report to cybercrime" / "call 1930"
-    re.compile(r"(report|call|contact|visit).{0,20}(cybercrime|cyber\s*crime|1930|police|helpline)", re.I),
-    # "hang up and report"
-    re.compile(r"(hang\s*up|disconnect).{0,20}(report|complain)", re.I),
+    re.compile(r"(report|call|contact|visit|सूचित|कॉल).{0,20}(cybercrime|cyber\s*crime|1930|police|helpline|साइबर|पुलिस|हेल्पलाइन)", re.I),
+    re.compile(r"(hang\s*up|disconnect|call\s*cut|कॉल\s*काट|काटो).{0,20}(report|complain|सूचना|रिपोर्ट)", re.I),
 ]
 
 
 def is_safe_advice(text: str) -> bool:
-    """
-    Returns True if the utterance is protective/advisory in nature.
-    Checks all three layers — any match means safe advice.
-    """
     for pattern in SAFE_NEGATION_PATTERNS:
         if pattern.search(text):
             return True
@@ -65,12 +39,8 @@ def is_safe_advice(text: str) -> bool:
 
 
 def filter_safe_advice(text: str, detected_labels: List[str]) -> List[str]:
-    """
-    If text is safe advice, remove ALL conflicting critical labels.
-    A genuine protective statement should never trigger a critical alert.
-    """
     if is_safe_advice(text):
-        critical_to_remove = {"SECRET_REQUEST", "PAYMENT_REQUEST", "REMOTE_ACCESS"}
+        critical_to_remove = {"SECRET_REQUEST", "PAYMENT_REQUEST", "REMOTE_ACCESS", "FEAR_THREAT"}
         filtered = [
             label for label in detected_labels
             if label not in critical_to_remove
