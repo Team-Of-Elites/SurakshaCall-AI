@@ -1,36 +1,38 @@
+from contextlib import contextmanager
 import sqlite3
-import os
-from typing import Generator
-from pathlib import Path
+from .config import DatabaseConfig
 
-# Base directory setup for data
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-DATA_DIR = BASE_DIR / "data"
-DATABASE_PATH = DATA_DIR / "suraksha.db"
+@contextmanager
+def open_connection(config: DatabaseConfig):
+    config.path.parent.mkdir(parents=True, exist_ok=True)
 
-def get_connection() -> sqlite3.Connection:
-    """
-    Creates and returns a connection to the SQLite database.
-    Ensures that foreign keys are enabled (PRAGMA foreign_keys = ON).
-    Returns rows as sqlite3.Row for dict-like access.
-    """
-    # Ensure data directory exists
-    os.makedirs(DATA_DIR, exist_ok=True)
-    
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(
+        config.path,
+        timeout=config.busy_timeout_ms / 1000,
+        isolation_level=None,
+        check_same_thread=False,
+    )
     conn.row_factory = sqlite3.Row
-    # Enable foreign keys
-    conn.execute("PRAGMA foreign_keys = ON;")
-    
-    return conn
 
-def get_db() -> Generator[sqlite3.Connection, None, None]:
-    """
-    Dependency generator for FastAPI (if needed in the future).
-    Yields a database connection and ensures it is closed after use.
-    """
-    conn = get_connection()
     try:
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute(f"PRAGMA busy_timeout = {config.busy_timeout_ms};")
+        conn.execute(f"PRAGMA synchronous = {config.synchronous};")
+        conn.execute("PRAGMA temp_store = MEMORY;")
+
+        if config.enable_wal and str(config.path) != ":memory:":
+            conn.execute("PRAGMA journal_mode = WAL;")
+
         yield conn
     finally:
         conn.close()
+
+@contextmanager
+def transaction(conn: sqlite3.Connection):
+    try:
+        conn.execute("BEGIN IMMEDIATE;")
+        yield conn
+        conn.execute("COMMIT;")
+    except Exception:
+        conn.execute("ROLLBACK;")
+        raise

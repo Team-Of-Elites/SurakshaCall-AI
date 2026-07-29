@@ -1,0 +1,12 @@
+{
+  "event_id": "426d4fed-15ea-4dfa-9c51-40c9cc27d58c",
+  "session_id": "S001",
+  "utterance_id": "U001",
+  "sequence": 1,
+  "speaker": "CALLER",
+  "started_ms": 0,
+  "ended_ms": 5000,
+  "raw_text": "My OTP is 482193",
+  "asr_model_id": "whisper-1",
+  "occurred_at_utc": "2026-07-27T19:37:23.259542+00:00"
+}
