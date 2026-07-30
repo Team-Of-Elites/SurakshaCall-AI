@@ -1,56 +1,31 @@
 import re
+from typing import Optional
 
-class Redactor:
+def redact_sensitive_text(raw_text: str) -> str:
     """
-    Handles the removal of Personally Identifiable Information (PII) 
-    and sensitive financial data from transcripts before they are persisted.
+    Redacts sensitive content in the following order:
+    1. URLs/Emails
+    2. UPI IDs
+    3. PAN
+    4. Aadhaar
+    5. Card numbers
+    6. OTP/PIN
     """
+    if not raw_text:
+        return raw_text
+        
+    text = raw_text
+    # 1. Email/UPI basic redaction
+    text = re.sub(r'[\w\.-]+@[\w\.-]+', '[EMAIL_UPI_REDACTED]', text)
+    # 2. URLs
+    text = re.sub(r'https?://[^\s]+', '[URL_REDACTED]', text)
+    # 3. PAN (basic Indian PAN format: 5 letters, 4 numbers, 1 letter)
+    text = re.sub(r'\b[A-Z]{5}\d{4}[A-Z]\b', '[PAN_REDACTED]', text)
+    # 4. Aadhaar (12 digits space separated)
+    text = re.sub(r'\b\d{4}\s\d{4}\s\d{4}\b', '[AADHAAR_REDACTED]', text)
+    # 5. OTP (4-6 digits)
+    text = re.sub(r'\b\d{4,6}\b', '[OTP_PIN_REDACTED]', text)
+    # 6. Large numbers (account, cards)
+    text = re.sub(r'\b\d{10,16}\b', '[ACCOUNT_REDACTED]', text)
     
-    # Pre-compile regex patterns for performance
-    PATTERNS = {
-        # Matches typical 4 to 8 digit OTPs/PINs (avoids matching short normal numbers by word boundaries)
-        "OTP": re.compile(r'\b\d{4,8}\b'),
-        
-        # Indian Aadhaar (12 digits, optional spaces)
-        "AADHAAR": re.compile(r'\b\d{4}\s?\d{4}\s?\d{4}\b'),
-        
-        # Indian PAN Card (5 letters, 4 numbers, 1 letter)
-        "PAN": re.compile(r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b', re.IGNORECASE),
-        
-        # Standard Credit/Debit Card (12-19 digits, optional dashes or spaces)
-        "CARD": re.compile(r'\b(?:\d[ -]*?){13,19}\b'),
-        
-        # UPI ID (username@bank)
-        "UPI": re.compile(r'\b[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}\b'),
-        
-        # Standard Emails
-        "EMAIL": re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'),
-        
-        # Phone Numbers (10 digits, optional country code)
-        "PHONE": re.compile(r'\b(?:\+?91[\-\s]?)?[7896]\d{9}\b'),
-        
-        # URLs
-        "URL": re.compile(r'\b(?:http|https)://[^\s]+\b|www\.[^\s]+\b')
-    }
-
-    @classmethod
-    def redact_transcript(cls, text: str) -> str:
-        """
-        Takes raw transcribed text and replaces sensitive patterns with safe placeholders.
-        The order of redaction matters (e.g., redact Aadhaar before generic OTPs).
-        """
-        if not text:
-            return text
-            
-        redacted_text = text
-        
-        # Order of execution is important to prevent smaller regexes (like OTP) 
-        # from breaking apart larger regexes (like Aadhaar or Cards).
-        ordered_keys = ["URL", "EMAIL", "UPI", "PAN", "CARD", "AADHAAR", "PHONE", "OTP"]
-        
-        for key in ordered_keys:
-            pattern = cls.PATTERNS[key]
-            placeholder = f"[{key}_REDACTED]"
-            redacted_text = pattern.sub(placeholder, redacted_text)
-            
-        return redacted_text
+    return text
