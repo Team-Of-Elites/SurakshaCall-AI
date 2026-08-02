@@ -1,0 +1,21 @@
+# config/action_catalog.yaml
+
+DO_NOT_SHARE_SECRET:
+  en: "Do not share the requested code, PIN, password, or credential."
+  hi: "माँगा गया कोड, पिन, पासवर्ड या बैंकिंग जानकारी साझा न करें।"
+  priority: 100
+
+PAUSE_PAYMENT:
+  en: "Pause the payment."
+  hi: "भुगतान रोकें।"
+  priority: 95
+
+END_CALL:
+  en: "End the call."
+  hi: "कॉल समाप्त करें।"
+  priority: 90
+
+VERIFY_INDEPENDENTLY:
+  en: "Contact the organization independently through its official app or website."
+  hi: "संस्था से उसके आधिकारिक ऐप या वेबसाइट के माध्यम से स्वतंत्र रूप से संपर्क करें।"
+  priority: 80

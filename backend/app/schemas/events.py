@@ -27,15 +27,25 @@ class EventType(StrEnum):
     SESSION_ENDED = "session_ended"
 
 
+#Change made by Namit
 class EventEnvelope(BaseModel):
-    model_config = ConfigDict(use_enum_values=True)
+    model_config = ConfigDict(extra="forbid")
 
-    type: EventType
-    session_id: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    payload: dict[str, Any] = Field(default_factory=dict)
-    event_id: str = Field(default_factory=lambda: str(uuid4()))
-    sequence: int | None = None
+    event_id: str = Field(min_length=1)
+    event_type: str = Field(min_length=1)
+    schema_version: int = Field(default=1, ge=1)
+    session_id: str = Field(min_length=1)
+    sequence: int = Field(ge=0)
+    state_version_seen: int | None = Field(default=None, ge=0)
+
+    occurred_monotonic_ns: int = Field(ge=0)
+    occurred_at_utc: datetime
+
+    producer: str = Field(min_length=1)
+    correlation_id: str | None = None
+    causation_id: str | None = None
+
+    payload: dict[str, Any]
 
 
 def make_event(
