@@ -1,4 +1,4 @@
-<h1 align="center">🛡️ SurakshaCall AI</h1>
+﻿<h1 align="center">🛡️ SurakshaCall AI</h1>
 <h3 align="center">Privacy-First Real-Time Scam Call Behavioral Analyzer</h3>
 
 <p align="center">
@@ -308,13 +308,14 @@ Open a second terminal:
 
 ```bash
 cd frontend
-python -m http.server 5173 --bind 127.0.0.1
+npm start
+npm run dev
 ```
 
 Then open:
 
 ```
-http://127.0.0.1:5173/
+http://localhost:5173/
 ```
 
 In the dashboard:
