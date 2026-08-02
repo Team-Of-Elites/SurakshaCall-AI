@@ -18,8 +18,8 @@ class SpeechTranscriber:
     def __init__(
         self,
         model_size: str = "small",
-        device: str = "cuda",
-        compute_type: str = "float16",
+        device: str = "cpu",
+        compute_type: str = "int8",
         test_override_text: str | None = None,
     ) -> None:
         self.model_size = model_size
@@ -83,19 +83,35 @@ class SpeechTranscriber:
             return "", "en", 0.0
 
         wav_bytes = pcm_to_wav_bytes(pcm16, sample_rate)
-        try:
-            segments, info = model.transcribe(
+
+        def run_transcribe(m, vad_flt: bool):
+            segments, info = m.transcribe(
                 io.BytesIO(wav_bytes),
                 language=None,
-                vad_filter=True,
+                vad_filter=vad_flt,
                 beam_size=1,
             )
             full_text = " ".join(segment.text.strip() for segment in segments).strip()
-            confidence = info.transcription_options.get("probability", 0.85) if hasattr(info, "transcription_options") else 0.85
-            lang = info.language if hasattr(info, "language") else "en"
+            confidence = getattr(info, "language_probability", 0.85)
+            lang = getattr(info, "language", "en")
             return full_text, lang, confidence
+
+        try:
+            text, lang, conf = run_transcribe(model, False)
+            if text:
+                return text, lang, conf
         except Exception:
-            return "", "en", 0.0
+            pass
+
+        # Fallback to CPU model if CUDA runtime failed
+        cpu_model, _, _ = WhisperModelLoader.get_cpu_model(self.model_size)
+        if cpu_model is not None:
+            try:
+                text, lang, conf = run_transcribe(cpu_model, False)
+                return text, lang, conf
+            except Exception:
+                return "", "en", 0.0
+        return "", "en", 0.0
 
 
 def pcm_to_wav_bytes(pcm16: bytes, sample_rate: int = 16000) -> bytes:

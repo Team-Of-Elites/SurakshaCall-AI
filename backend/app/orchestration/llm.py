@@ -4,8 +4,8 @@ from typing import Any
 
 from backend.app.config import Settings
 from backend.app.orchestration.state import CallState
+from backend.app.risk.decision import build_decision, build_decision_from_llm
 from backend.app.schemas.decision import RiskDecision
-
 
 SYSTEM_PROMPT = """
 You are SurakshaCall AI's local risk decision helper.
@@ -87,7 +87,7 @@ def _ollama_decision_sync(state: CallState, settings: Settings) -> RiskDecision 
         parsed = _extract_json(content)
         if not parsed:
             return None
-        return _decision_from_payload(state, parsed)
+        return build_decision_from_llm(state, parsed)
     except Exception:
         return None
 
@@ -107,77 +107,5 @@ def _extract_json(content: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-def _decision_from_payload(state: CallState, payload: dict[str, Any]) -> RiskDecision:
-    deterministic_risk = int(state.current_risk)
-    risk = _safe_int(payload.get("risk"), deterministic_risk)
-    risk = max(deterministic_risk, min(100, max(0, risk)))
-    level = str(payload.get("level") or _level_for_risk(risk)).upper()
-    if level not in {"LOW", "MEDIUM", "HIGH", "CRITICAL"}:
-        level = _level_for_risk(risk)
-    deterministic_level = _level_for_risk(deterministic_risk)
-    if _level_rank(level) < _level_rank(deterministic_level):
-        level = deterministic_level
-    action = str(payload.get("action") or _default_action(level))[:300]
-    explanation = str(payload.get("explanation") or "Local LLM decision unavailable; deterministic safety policy applied.")[:500]
-    return RiskDecision(
-        session_id=state.session_id,
-        risk=risk,
-        level=level,  # type: ignore[arg-type]
-        action=action,
-        explanation=explanation,
-        evidence_ids=[item.evidence_id for item in state.evidence_events[-8:]],
-    )
-
-
 def deterministic_decision(state: CallState) -> RiskDecision:
-    risk = int(state.current_risk)
-    level = state.current_level
-    return RiskDecision(
-        session_id=state.session_id,
-        risk=risk,
-        level=level,
-        action=_default_action(level),
-        explanation=_default_explanation(level),
-        evidence_ids=[item.evidence_id for item in state.evidence_events[-8:]],
-    )
-
-
-def _safe_int(value: Any, default: int) -> int:
-    try:
-        return int(value)
-    except Exception:
-        return default
-
-
-def _level_for_risk(risk: int) -> str:
-    if risk >= 85:
-        return "CRITICAL"
-    if risk >= 70:
-        return "HIGH"
-    if risk >= 40:
-        return "MEDIUM"
-    return "LOW"
-
-
-def _level_rank(level: str) -> int:
-    return {"LOW": 0, "MEDIUM": 1, "HIGH": 2, "CRITICAL": 3}.get(level, 0)
-
-
-def _default_action(level: str) -> str:
-    if level == "CRITICAL":
-        return "End the call and verify through an official number."
-    if level == "HIGH":
-        return "Do not share sensitive information; verify independently."
-    if level == "MEDIUM":
-        return "Pause and verify the caller before continuing."
-    return "Continue monitoring."
-
-
-def _default_explanation(level: str) -> str:
-    if level == "CRITICAL":
-        return "Critical scam indicators were detected in the conversation."
-    if level == "HIGH":
-        return "Multiple risky tactics were detected."
-    if level == "MEDIUM":
-        return "Some suspicious signals were detected, but more context may be needed."
-    return "No high-risk pattern confirmed yet."
+    return build_decision(state)

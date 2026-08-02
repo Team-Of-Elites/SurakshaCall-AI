@@ -1,37 +1,21 @@
-from enum import Enum
-from typing import Dict, Any
+from typing import Optional
 
-class RetentionMode(Enum):
-    MAXIMUM_PRIVACY = "MAXIMUM_PRIVACY"
-    EVALUATION = "EVALUATION"
+class RetentionPolicy:
+    def should_persist_utterance(self, privacy_mode: str) -> bool:
+        if privacy_mode == "MAXIMUM_PRIVACY":
+            return False
+        return True # EVALUATION mode or other explicit mode
 
-class RetentionManager:
-    """
-    Manages the data retention policy.
-    In MAXIMUM_PRIVACY mode, raw audio, unredacted transcripts, 
-    and even redacted transcripts are NOT saved to the database.
-    In EVALUATION mode, redacted transcripts and evidence events ARE saved for later analysis.
-    """
-    
-    def __init__(self, mode: RetentionMode = RetentionMode.MAXIMUM_PRIVACY):
-        self.current_mode = mode
-        
-    def set_mode(self, mode: RetentionMode):
-        self.current_mode = mode
-        
-    def get_mode(self) -> RetentionMode:
-        return self.current_mode
-        
-    def should_save_transcript(self) -> bool:
-        """Returns True if redacted transcripts should be saved to the database."""
-        return self.current_mode == RetentionMode.EVALUATION
+    def should_persist_evidence(self, privacy_mode: str) -> bool:
+        return True
 
-    def should_save_audio(self) -> bool:
-        """
-        By default, raw audio is NEVER saved, regardless of the evaluation mode.
-        It strictly lives in the in-memory ring buffer.
-        """
-        return False
-        
-# Global instance for the backend to use
-retention_manager = RetentionManager()
+    def should_persist_risk(self, privacy_mode: str) -> bool:
+        return True
+
+    def should_persist_pattern_match(self, privacy_mode: str) -> bool:
+        return True
+
+    def deletion_due_at(self, privacy_mode: str, started_at_utc: str) -> Optional[str]:
+        # Typically calculate an expiration time depending on policy.
+        # Returning None implies immediate/session-bound lifecycle
+        return None

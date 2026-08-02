@@ -1,0 +1,31 @@
+- id: safe.never_share.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect safe advice about never sharing secrets"
+  label: SAFE_ADVICE
+  severity: 0
+  confidence: 0.95
+  score_delta: 0
+  conditions:
+    any:
+      - type: concept
+        value: SAFE_ADVICE
+      - type: regex
+        value: "(never|kabhi mat).{0,40}(share|give|tell|batana|do|dena)"
+      - type: regex
+        value: "(bank|staff|official|company).{0,40}(never|kabhi).{0,20}(ask|request|mangte)"
+
+- id: safe.report.v1
+  version: 1
+  enabled: true
+  languages: [en, hi, hi-en]
+  description: "Detect reporting/helpline advice"
+  label: SAFE_ADVICE
+  severity: 0
+  confidence: 0.95
+  score_delta: 0
+  conditions:
+    any:
+      - type: regex
+        value: "(report|call|contact).{0,20}(1930|cybercrime|police|helpline|cyber crime)"

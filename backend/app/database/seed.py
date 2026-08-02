@@ -1,236 +1,76 @@
-import argparse
-import os
 import sqlite3
+import argparse
 import json
 from pathlib import Path
-from backend.app.database.connection import get_connection, DATABASE_PATH
+import sys
+import shutil
 
-SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
+def run_seed(db_path: str, schema_path: str, seed_dir: str, reset: bool = False):
+    db_file = Path(db_path)
+    if reset:
+        if db_file.exists():
+            print(f"Removing {db_file}...")
+            db_file.unlink()
+        wal_file = Path(f"{db_path}-wal")
+        shm_file = Path(f"{db_path}-shm")
+        if wal_file.exists(): wal_file.unlink()
+        if shm_file.exists(): shm_file.unlink()
 
-def reset_database():
-    """Drops the database file to start fresh."""
-    if os.path.exists(DATABASE_PATH):
-        print(f"Removing database at {DATABASE_PATH}...")
-        os.remove(DATABASE_PATH)
-    else:
-        print("No existing database found to reset.")
-
-def initialize_schema(conn: sqlite3.Connection):
-    """Executes the schema.sql file."""
-    if not os.path.exists(SCHEMA_PATH):
-        raise FileNotFoundError(f"Schema file not found at {SCHEMA_PATH}")
+    db_file.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path, isolation_level=None)
     
-    with open(SCHEMA_PATH, "r") as f:
-        schema_script = f.read()
-    
-    print("Executing schema...")
-    conn.executescript(schema_script)
-
-def seed_trusted_organizations(conn: sqlite3.Connection):
-    """Seeds default trusted organizations and their official numbers."""
-    orgs = [
-        ("org_001", "State Bank of India", "BANK")
-    ]
-    numbers = [
-        ("1800112211", "org_001"),
-        ("18004253800", "org_001")
-    ]
-    
-    conn.executemany("""
-        INSERT OR IGNORE INTO trusted_organizations (id, name, type)
-        VALUES (?, ?, ?)
-    """, orgs)
-    
-    conn.executemany("""
-        INSERT OR IGNORE INTO official_numbers (number, organization_id)
-        VALUES (?, ?)
-    """, numbers)
-    print("Seeded trusted organizations.")
-
-def seed_community_patterns(conn: sqlite3.Connection):
-    """Seeds synthetic community fraud patterns."""
-    patterns = [
-        {
-            "id": "pattern_001",
-            "tactics": json.dumps(["AUTHORITY", "URGENCY", "ISOLATION"]),
-            "organization_type": "BANK",
-            "scenario": "BANK_KYC",
-            "requested_action": "SECRET_CODE",
-            "threat_type": "ACCOUNT_FREEZE",
-            "channel_switch": "NONE",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_002",
-            "tactics": json.dumps(["AUTHORITY", "THREAT", "ISOLATION"]),
-            "organization_type": "LAW_ENFORCEMENT",
-            "scenario": "DIGITAL_ARREST",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "IMMEDIATE_ARREST",
-            "channel_switch": "VIDEO_CALL",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_003",
-            "tactics": json.dumps(["URGENCY", "CONFUSION"]),
-            "organization_type": "PAYMENT_APP",
-            "scenario": "UPI_REFUND",
-            "requested_action": "PIN_ENTRY",
-            "threat_type": "LOSS_OF_FUNDS",
-            "channel_switch": "NONE",
-            "language_family": "HI"
-        },
-        {
-            "id": "pattern_004",
-            "tactics": json.dumps(["HELPFUL", "TECHNICAL_JARGON"]),
-            "organization_type": "TECH_SUPPORT",
-            "scenario": "REMOTE_SUPPORT",
-            "requested_action": "APP_INSTALL",
-            "threat_type": "DEVICE_COMPROMISE",
-            "channel_switch": "SCREEN_SHARE",
-            "language_family": "EN"
-        },
-        {
-            "id": "pattern_005",
-            "tactics": json.dumps(["AUTHORITY", "URGENCY", "SURPRISE"]),
-            "organization_type": "CUSTOMS",
-            "scenario": "COURIER_SEIZURE",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "LEGAL_ACTION",
-            "channel_switch": "NONE",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_006",
-            "tactics": json.dumps(["GREED", "URGENCY", "SOCIAL_PROOF"]),
-            "organization_type": "INVESTMENT_FIRM",
-            "scenario": "CRYPTO_INVESTMENT",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "MISSED_OPPORTUNITY",
-            "channel_switch": "TELEGRAM",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_007",
-            "tactics": json.dumps(["GREED", "TRUST_BUILDING", "SUNKEN_COST"]),
-            "organization_type": "E_COMMERCE",
-            "scenario": "PART_TIME_JOB",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "LOSS_OF_FUNDS",
-            "channel_switch": "WHATSAPP",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_008",
-            "tactics": json.dumps(["HELPFUL", "URGENCY", "AUTHORITY"]),
-            "organization_type": "BANK",
-            "scenario": "LOAN_APPROVAL",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "MISSED_OPPORTUNITY",
-            "channel_switch": "NONE",
-            "language_family": "HI"
-        },
-        {
-            "id": "pattern_009",
-            "tactics": json.dumps(["SURPRISE", "GREED", "URGENCY"]),
-            "organization_type": "LOTTERY",
-            "scenario": "PRIZE_WINNER",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "MISSED_OPPORTUNITY",
-            "channel_switch": "NONE",
-            "language_family": "HI"
-        },
-        {
-            "id": "pattern_010",
-            "tactics": json.dumps(["THREAT", "URGENCY", "AUTHORITY"]),
-            "organization_type": "TELECOM",
-            "scenario": "SIM_BLOCK",
-            "requested_action": "APP_INSTALL",
-            "threat_type": "SERVICE_DISCONNECTION",
-            "channel_switch": "NONE",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_011",
-            "tactics": json.dumps(["PANIC", "URGENCY", "EMOTIONAL_MANIPULATION"]),
-            "organization_type": "HOSPITAL",
-            "scenario": "RELATIVE_EMERGENCY",
-            "requested_action": "MONEY_TRANSFER",
-            "threat_type": "MEDICAL_EMERGENCY",
-            "channel_switch": "NONE",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_012",
-            "tactics": json.dumps(["HELPFUL", "CONFUSION", "URGENCY"]),
-            "organization_type": "AIRLINE",
-            "scenario": "TICKET_REFUND",
-            "requested_action": "APP_INSTALL",
-            "threat_type": "LOSS_OF_FUNDS",
-            "channel_switch": "SCREEN_SHARE",
-            "language_family": "HI_EN"
-        },
-        {
-            "id": "pattern_013",
-            "tactics": json.dumps(["THREAT", "URGENCY", "AUTHORITY"]),
-            "organization_type": "ELECTRICITY_BOARD",
-            "scenario": "POWER_DISCONNECTION",
-            "requested_action": "SECRET_CODE",
-            "threat_type": "SERVICE_DISCONNECTION",
-            "channel_switch": "WHATSAPP",
-            "language_family": "HI"
-        },
-        {
-            "id": "pattern_014",
-            "tactics": json.dumps(["URGENCY", "HELPFUL", "CONFUSION"]),
-            "organization_type": "POST_OFFICE",
-            "scenario": "DELIVERY_FAILURE",
-            "requested_action": "CLICK_LINK",
-            "threat_type": "PACKAGE_RETURN",
-            "channel_switch": "SMS",
-            "language_family": "EN"
-        },
-        {
-            "id": "pattern_015",
-            "tactics": json.dumps(["URGENCY", "GREED", "HELPFUL"]),
-            "organization_type": "CREDIT_CARD",
-            "scenario": "REWARD_POINTS_EXPIRY",
-            "requested_action": "SECRET_CODE",
-            "threat_type": "LOSS_OF_FUNDS",
-            "channel_switch": "NONE",
-            "language_family": "HI_EN"
-        }
-    ]
-    
-    for p in patterns:
-        conn.execute("""
-            INSERT OR IGNORE INTO community_patterns 
-            (id, schema_version, tactics, organization_type, scenario, requested_action, threat_type, channel_switch, language_family)
-            VALUES (?, 1, ?, ?, ?, ?, ?, ?, ?)
-        """, (p["id"], p["tactics"], p["organization_type"], p["scenario"], p["requested_action"], p["threat_type"], p["channel_switch"], p["language_family"]))
-        
-    print("Seeded community patterns.")
-
-def main():
-    parser = argparse.ArgumentParser(description="Seed the SurakshaCall database.")
-    parser.add_argument("--reset", action="store_true", help="Reset the database before seeding.")
-    args = parser.parse_args()
-
-    if args.reset:
-        reset_database()
-
-    # get_connection ensures the directory exists and foreign keys are enabled
-    conn = get_connection()
     try:
-        with conn: # Use transaction
-            initialize_schema(conn)
-            seed_trusted_organizations(conn)
-            seed_community_patterns(conn)
-        print("Database seeding completed successfully.")
-    except Exception as e:
-        print(f"Error during seeding: {e}")
+        if reset or not db_file.exists():
+            print(f"Applying schema from {schema_path}...")
+            with open(schema_path, "r") as f:
+                conn.executescript(f.read())
+        
+        print("Inserting seed data (idempotent)...")
+        conn.execute("BEGIN IMMEDIATE;")
+        try:
+            # Reference Sources
+            conn.execute("""
+                INSERT INTO reference_sources (source_id, source_type, source_title, publisher, first_verified_at_utc, last_verified_at_utc, review_status)
+                VALUES (1, 'OFFICIAL_WEBSITE', 'SBI Official Site', 'SBI', '2026-07-28T00:00:00Z', '2026-07-28T00:00:00Z', 'VERIFIED')
+                ON CONFLICT(source_id) DO NOTHING
+            """)
+            
+            # Trusted Organizations
+            conn.execute("""
+                INSERT INTO trusted_organizations (organization_id, canonical_name, organization_type, created_at_utc, updated_at_utc)
+                VALUES (1, 'State Bank of India', 'BANK', '2026-07-28T00:00:00Z', '2026-07-28T00:00:00Z')
+                ON CONFLICT(canonical_name) DO UPDATE SET active=1
+            """)
+            
+            # Organization Policies
+            conn.execute("""
+                INSERT INTO organization_policies (organization_id, policy_code, policy_text, severity, verified_at_utc, expires_at_utc, source_id)
+                VALUES (1, 'NO_OTP_REQUEST', 'Bank will never ask for OTP', 5, '2026-07-28T00:00:00Z', NULL, 1)
+                ON CONFLICT(organization_id, policy_code) DO NOTHING
+            """)
+            
+            # Dev Model Bundle
+            conn.execute("""
+                INSERT INTO model_bundles (model_bundle_id, asr_model_id, embedding_model_id, classifier_model_id, llm_model_id, rule_set_version, prompt_version, normalizer_version, risk_policy_version, created_at_utc)
+                VALUES ('BUNDLE_DEV_UNRESOLVED', 'NOT_SELECTED', 'NOT_SELECTED', 'NOT_SELECTED', 'NOT_SELECTED', 'dev', 'dev', 'dev', 'dev', '2026-07-28T00:00:00Z')
+                ON CONFLICT(model_bundle_id) DO NOTHING
+            """)
+            
+            conn.execute("COMMIT;")
+            print("Seed complete.")
+        except Exception as e:
+            conn.execute("ROLLBACK;")
+            print(f"Seed failed: {e}")
+            raise
     finally:
         conn.close()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--reset", action="store_true")
+    args = parser.parse_args()
+    
+    db_path = "data/database/suraksha.db"
+    schema_path = "backend/app/database/schema.sql"
+    seed_dir = "data/seed/"
+    run_seed(db_path, schema_path, seed_dir, args.reset)

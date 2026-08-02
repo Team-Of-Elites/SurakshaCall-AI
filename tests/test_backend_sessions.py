@@ -59,7 +59,7 @@ def test_deep_analysis_updates_decision_with_rules_fallback():
 
 def test_invalid_dashboard_websocket_gets_error():
     with TestClient(create_app()) as client:
-        with client.websocket_connect("/ws/dashboard/not-a-session") as websocket:
+        with client.websocket_connect("/ws/dashboard/not-a-session?token=local-dev-token") as websocket:
             message = websocket.receive_json()
             assert message["type"] == "system_error"
 
